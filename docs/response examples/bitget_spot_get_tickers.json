@@ -1,0 +1,53 @@
+{
+  "endpoint": "GET /api/v2/spot/market/tickers",
+  "description": "Get All Market Tickers (24h Statistics)",
+  "test_timestamp": "2025-01-30T15:19:00Z",
+  "status": "SUCCESS",
+  "raw_response_sample": [
+    {
+      "open": "13.41",
+      "symbol": "LINKUSDT",
+      "high24h": "13.88",
+      "low24h": "13.19",
+      "lastPr": "13.28",
+      "quoteVolume": "5473505.5535",
+      "baseVolume": "404587.2881",
+      "usdtVolume": "5473505.553482475",
+      "ts": "1751271584274",
+      "bidPr": "13.28",
+      "askPr": "13.29",
+      "bidSz": "453.4352",
+      "askSz": "110.8089",
+      "openUtc": "13.7",
+      "changeUtc24h": "-0.03066",
+      "change24h": "-0.00969"
+    }
+  ],
+  "response_analysis": {
+    "total_tickers": 824,
+    "rising_pairs": "564 (68.4%)",
+    "falling_pairs": "231 (28.0%)",
+    "unchanged_pairs": "29 (3.5%)",
+    "top_gainer": "HUSDT: +0.80%",
+    "top_loser": "BAIUSDT: -0.18%",
+    "highest_volume": "LINKUSDT"
+  },
+  "field_descriptions": {
+    "open": "Opening price 24h ago",
+    "symbol": "Trading pair symbol",
+    "high24h": "24h highest price",
+    "low24h": "24h lowest price",
+    "lastPr": "Last/current price",
+    "quoteVolume": "24h quote volume",
+    "baseVolume": "24h base volume",
+    "usdtVolume": "24h USDT volume",
+    "ts": "Timestamp",
+    "bidPr": "Best bid price",
+    "askPr": "Best ask price",
+    "bidSz": "Best bid size",
+    "askSz": "Best ask size",
+    "openUtc": "UTC opening price",
+    "changeUtc24h": "24h change from UTC",
+    "change24h": "24h price change percentage"
+  }
+}

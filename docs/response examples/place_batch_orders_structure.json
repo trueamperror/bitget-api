@@ -1,0 +1,81 @@
+{
+  "endpoint": "/api/v2/mix/order/batch-orders",
+  "method": "POST",
+  "description": "Размещение пакетных ордеров - до 20 ордеров в одном запросе",
+  "order_type": "batch",
+  "features": [
+    "Multiple orders per request",
+    "Atomic execution",
+    "Mixed order types",
+    "Grid/ladder trading"
+  ],
+  "examples": {
+    "simple_batch": {
+      "symbol": "BTCUSDT",
+      "productType": "USDT-FUTURES",
+      "marginCoin": "USDT",
+      "orderDataList": [
+        {
+          "symbol": "BTCUSDT",
+          "productType": "USDT-FUTURES",
+          "marginCoin": "USDT",
+          "size": "0.001",
+          "side": "buy",
+          "orderType": "limit",
+          "price": "80000",
+          "clientOid": "batch_buy_limit_001",
+          "reduceOnly": "false"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "productType": "USDT-FUTURES",
+          "marginCoin": "USDT",
+          "size": "0.001",
+          "side": "sell",
+          "orderType": "limit",
+          "price": "85000",
+          "clientOid": "batch_sell_limit_001",
+          "reduceOnly": "false"
+        }
+      ]
+    },
+    "ladder_orders": {
+      "symbol": "ETHUSDT",
+      "productType": "USDT-FUTURES",
+      "marginCoin": "USDT",
+      "orderDataList": [
+        {
+          "symbol": "ETHUSDT",
+          "size": "0.01",
+          "side": "buy",
+          "orderType": "limit",
+          "price": "3200",
+          "note": "Ladder buying at different price levels"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "size": "0.01",
+          "side": "buy",
+          "orderType": "limit",
+          "price": "3150"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "size": "0.01",
+          "side": "buy",
+          "orderType": "limit",
+          "price": "3100"
+        }
+      ]
+    }
+  },
+  "limits": {
+    "max_orders_per_batch": 20,
+    "supported_order_types": [
+      "limit",
+      "market"
+    ],
+    "max_symbols_per_batch": 1
+  },
+  "timestamp": "2025-06-30T14:48:04.667184"
+}

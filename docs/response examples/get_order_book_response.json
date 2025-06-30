@@ -1,0 +1,66 @@
+{
+  "endpoint": "/api/v2/mix/market/merge-depth",
+  "method": "GET",
+  "description": "Получение стакана заявок (order book) для фьючерсов",
+  "parameters": {
+    "symbol": "BTCUSDT",
+    "productType": "USDT-FUTURES",
+    "limit": 5
+  },
+  "timestamp": "2025-06-30T13:36:07.860738",
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1751265367858,
+    "data": {
+      "asks": [
+        [
+          108109.5,
+          40.8751
+        ],
+        [
+          108109.6,
+          0.0001
+        ],
+        [
+          108109.7,
+          0.0205
+        ],
+        [
+          108109.8,
+          0.5024
+        ],
+        [
+          108110.0,
+          0.0005
+        ]
+      ],
+      "bids": [
+        [
+          108109.4,
+          0.2087
+        ],
+        [
+          108109.3,
+          0.0002
+        ],
+        [
+          108109.2,
+          0.0002
+        ],
+        [
+          108109.1,
+          0.0002
+        ],
+        [
+          108106.0,
+          0.001
+        ]
+      ],
+      "ts": "1751265367793",
+      "scale": "0.1",
+      "precision": "scale0",
+      "isMaxPrecision": "NO"
+    }
+  }
+}

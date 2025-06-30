@@ -1,0 +1,24 @@
+{
+  "endpoint": "/api/v2/mix/account/set-margin-mode",
+  "method": "POST",
+  "description": "Установка режима маржи для торговой пары",
+  "parameters": {
+    "symbol": "BTCUSDT",
+    "marginMode": "crossed",
+    "productType": "USDT-FUTURES",
+    "marginCoin": "USDT"
+  },
+  "timestamp": "2025-06-30T13:56:04.664389",
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1751266564767,
+    "data": {
+      "symbol": "BTCUSDT",
+      "marginCoin": "USDT",
+      "longLeverage": "10",
+      "shortLeverage": "10",
+      "marginMode": "crossed"
+    }
+  }
+}

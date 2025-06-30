@@ -1,0 +1,26 @@
+{
+  "endpoint": "/api/v2/mix/account/set-leverage",
+  "method": "POST",
+  "description": "Установка плеча для торговой пары",
+  "parameters": {
+    "symbol": "BTCUSDT",
+    "leverage": "10",
+    "marginMode": "crossed",
+    "productType": "USDT-FUTURES",
+    "marginCoin": "USDT"
+  },
+  "timestamp": "2025-06-30T13:54:48.273853",
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1751266488372,
+    "data": {
+      "symbol": "BTCUSDT",
+      "marginCoin": "USDT",
+      "longLeverage": "10",
+      "shortLeverage": "10",
+      "crossMarginLeverage": "10",
+      "marginMode": "crossed"
+    }
+  }
+}

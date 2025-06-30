@@ -1,0 +1,105 @@
+{
+  "endpoint": "/api/v2/mix/market/query-position-lever",
+  "method": "GET",
+  "description": "Получение информации о доступных уровнях плеча для торговых пар",
+  "parameters": {
+    "symbol": "BTCUSDT",
+    "productType": "USDT-FUTURES"
+  },
+  "timestamp": "2025-06-30T13:31:39.832275",
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1751265099840,
+    "data": [
+      {
+        "symbol": "BTCUSDT",
+        "level": "1",
+        "startUnit": "0",
+        "endUnit": "150000",
+        "leverage": "125",
+        "keepMarginRate": "0.0040"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "2",
+        "startUnit": "150000",
+        "endUnit": "900000",
+        "leverage": "100",
+        "keepMarginRate": "0.0050"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "3",
+        "startUnit": "900000",
+        "endUnit": "12000000",
+        "leverage": "50",
+        "keepMarginRate": "0.0100"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "4",
+        "startUnit": "12000000",
+        "endUnit": "38000000",
+        "leverage": "25",
+        "keepMarginRate": "0.0150"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "5",
+        "startUnit": "38000000",
+        "endUnit": "50000000",
+        "leverage": "20",
+        "keepMarginRate": "0.03"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "6",
+        "startUnit": "50000000",
+        "endUnit": "100000000",
+        "leverage": "10",
+        "keepMarginRate": "0.05"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "7",
+        "startUnit": "100000000",
+        "endUnit": "150000000",
+        "leverage": "5",
+        "keepMarginRate": "0.12"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "8",
+        "startUnit": "150000000",
+        "endUnit": "200000000",
+        "leverage": "4",
+        "keepMarginRate": "0.15"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "9",
+        "startUnit": "200000000",
+        "endUnit": "250000000",
+        "leverage": "3",
+        "keepMarginRate": "0.2"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "10",
+        "startUnit": "250000000",
+        "endUnit": "400000000",
+        "leverage": "2",
+        "keepMarginRate": "0.3"
+      },
+      {
+        "symbol": "BTCUSDT",
+        "level": "11",
+        "startUnit": "400000000",
+        "endUnit": "1200000000",
+        "leverage": "1",
+        "keepMarginRate": "0.6"
+      }
+    ]
+  }
+}

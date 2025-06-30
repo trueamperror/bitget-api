@@ -1,0 +1,23 @@
+{
+    "apiKey": "",
+    "secretKey": "",
+    "passphrase": "",
+    "baseURL": "https://api.bitget.com",
+    "wsURL": "wss://ws.bitget.com/v2/ws/public",
+    "privateWsURL": "wss://ws.bitget.com/v2/ws/private",
+    "testnet": false,
+    "timeout": 10,
+    "defaultProductType": "usdt-futures",
+    "defaultMarginMode": "crossed",
+    "defaultSymbol": "BTCUSDT",
+    "rateLimit": {
+        "requests_per_second": 10,
+        "burst_limit": 20
+    },
+    "trading": {
+        "default_order_type": "limit",
+        "default_time_in_force": "gtc",
+        "max_order_size": 1000000,
+        "min_order_size": 0.000001
+    }
+}

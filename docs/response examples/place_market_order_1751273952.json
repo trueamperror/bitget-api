@@ -1,0 +1,20 @@
+{
+  "request": {
+    "symbol": "BTCUSDT",
+    "side": "buy",
+    "orderType": "market",
+    "force": "gtc",
+    "size": "5.0"
+  },
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1751273952872,
+    "data": {
+      "orderId": "1323504373667975176",
+      "clientOid": "8c29ed09-1ed3-4d78-b7cd-04ffe293ea6e"
+    }
+  },
+  "status_code": 200,
+  "timestamp": "2025-06-30T15:59:12.834349"
+}

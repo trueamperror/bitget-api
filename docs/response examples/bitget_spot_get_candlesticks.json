@@ -1,0 +1,83 @@
+{
+  "endpoint": "GET /api/v2/spot/market/candles",
+  "description": "Get Spot Market Candlestick Data",
+  "test_timestamp": "2025-01-30T13:15:00Z",
+  "status": "SUCCESS",
+  "test_params": {
+    "symbol": "BTCUSDT",
+    "granularity": "1h",
+    "limit": 5
+  },
+  "raw_response": [
+    [
+      "1751252400000",
+      "108472.58",
+      "108568.06",
+      "108424.03",
+      "108493.02",
+      "98.4698727708",
+      "10683340.684544787124",
+      "10683340.684544787124"
+    ],
+    [
+      "1751256000000",
+      "108493.02",
+      "108533.33",
+      "108300.95",
+      "108311.57",
+      "84.0710429862",
+      "9116045.794332083346",
+      "9116045.794332083346"
+    ],
+    [
+      "1751259600000",
+      "108311.57",
+      "108379.61",
+      "108150",
+      "108270.46",
+      "107.3670216416",
+      "11623244.01505095795",
+      "11623244.01505095795"
+    ],
+    [
+      "1751263200000",
+      "108270.46",
+      "108283.61",
+      "107520",
+      "107561.54",
+      "245.8959364312",
+      "26526425.049552501106",
+      "26526425.049552501106"
+    ],
+    [
+      "1751266800000",
+      "107561.54",
+      "107741.19",
+      "107480.19",
+      "107645.01",
+      "180.6897810716",
+      "19446222.397492205592",
+      "19446222.397492205592"
+    ]
+  ],
+  "response_analysis": {
+    "total_candles": 5,
+    "price_change": "+$931.48 (+0.87%)",
+    "max_price": "$108568.06",
+    "min_price": "$107480.19",
+    "avg_price": "$108056.32",
+    "total_volume": "$77,395,277.94",
+    "pattern": "Sideways movement"
+  },
+  "data_format": {
+    "array_position_0": "timestamp (milliseconds)",
+    "array_position_1": "open_price",
+    "array_position_2": "high_price",
+    "array_position_3": "low_price",
+    "array_position_4": "close_price",
+    "array_position_5": "base_volume",
+    "array_position_6": "quote_volume",
+    "array_position_7": "quote_volume_duplicate"
+  },
+  "note": "Fixed granularity parameter format from '1H' to '1h' as required by Bitget API"
+}

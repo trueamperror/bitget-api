@@ -1,0 +1,48 @@
+{
+  "endpoint": "/api/v2/mix/position/allPosition",
+  "method": "GET",
+  "description": "Получение всех открытых позиций",
+  "parameters": {
+    "productType": "USDT-FUTURES"
+  },
+  "timestamp": "2025-06-30T13:32:42.046134",
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1751265162036,
+    "data": [
+      {
+        "marginCoin": "USDT",
+        "symbol": "BTCUSDT",
+        "holdSide": "long",
+        "openDelegateSize": "0.0004",
+        "marginSize": "5.415985",
+        "available": "0.0005",
+        "locked": "0",
+        "total": "0.0005",
+        "leverage": "10",
+        "achievedProfits": "0",
+        "openPriceAvg": "108319.7",
+        "marginMode": "crossed",
+        "posMode": "one_way_mode",
+        "unrealizedPL": "-0.0981",
+        "liquidationPrice": "10933.548240002",
+        "keepMarginRate": "0.004",
+        "markPrice": "108123.5",
+        "marginRatio": "0.009807222976",
+        "breakEvenPrice": "108536.556256256257",
+        "totalFee": "",
+        "deductedFee": "0.05415985",
+        "grant": "",
+        "assetMode": "single",
+        "autoMargin": "off",
+        "takeProfit": "",
+        "stopLoss": "",
+        "takeProfitId": "",
+        "stopLossId": "",
+        "cTime": "1751258766575",
+        "uTime": "1751264790954"
+      }
+    ]
+  }
+}

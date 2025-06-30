@@ -1,0 +1,36 @@
+{
+  "endpoint": "/api/v2/mix/order/place-order",
+  "method": "POST",
+  "description": "Размещение лимитных ордеров на фьючерсах (buy/sell)",
+  "order_type": "limit",
+  "features": [
+    "Good Till Canceled (GTC)",
+    "Crossed/Isolated margin",
+    "One-way trading mode"
+  ],
+  "examples": {
+    "limit_buy_crossed": {
+      "symbol": "BTCUSDT",
+      "productType": "USDT-FUTURES",
+      "marginMode": "crossed",
+      "marginCoin": "USDT",
+      "size": "0.001",
+      "side": "buy",
+      "orderType": "limit",
+      "price": "45000.50",
+      "force": "gtc"
+    },
+    "limit_sell_isolated": {
+      "symbol": "ETHUSDT",
+      "productType": "USDT-FUTURES",
+      "marginMode": "isolated",
+      "marginCoin": "USDT",
+      "size": "0.01",
+      "side": "sell",
+      "orderType": "limit",
+      "price": "3200.25",
+      "force": "gtc"
+    }
+  },
+  "timestamp": "2025-06-30T14:31:52.131135"
+}

@@ -1,0 +1,58 @@
+{
+  "endpoint": "GET /api/v2/spot/trade/fills",
+  "description": "Get Trade History/Order Fills",
+  "test_timestamp": "2025-01-30T15:15:00Z", 
+  "status": "SUCCESS",
+  "parameters": {
+    "symbol": null,
+    "start_time": "last_7_days",
+    "limit": 50
+  },
+  "raw_response": [
+    {
+      "userId": "2402557173",
+      "symbol": "BTCUSDT",
+      "orderId": "1323412525402279937",
+      "tradeId": "1323412525437554795",
+      "orderType": "market",
+      "side": "buy",
+      "priceAvg": "108516.32",
+      "size": "0.000046",
+      "amount": "4.99175072",
+      "feeDetail": {
+        "deduction": "no",
+        "feeCoin": "BTC",
+        "totalDeductionFee": "",
+        "totalFee": "-0.000000046"
+      },
+      "tradeScope": "taker",
+      "cTime": "1751252054557",
+      "uTime": "1751252054567"
+    }
+  ],
+  "response_analysis": {
+    "total_orders": 6,
+    "period": "last_7_days",
+    "all_btcusdt_buys": true,
+    "order_type": "market",
+    "trade_scope": "taker",
+    "total_btc_purchased": "0.000276",
+    "total_usdt_spent": "~29.95"
+  },
+  "field_descriptions": {
+    "userId": "User ID",
+    "symbol": "Trading pair",
+    "orderId": "Order ID",
+    "tradeId": "Trade execution ID", 
+    "orderType": "Order type (market/limit)",
+    "side": "buy/sell",
+    "priceAvg": "Average execution price",
+    "size": "Quantity filled",
+    "amount": "Total value",
+    "feeDetail": "Fee information",
+    "tradeScope": "maker/taker",
+    "cTime": "Creation timestamp",
+    "uTime": "Update timestamp"
+  },
+  "note": "Fixed endpoint from '/api/v2/spot/trade/orders-history' to '/api/v2/spot/trade/fills'"
+}
