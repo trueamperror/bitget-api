@@ -115,6 +115,9 @@ api_keys.json
 *.json.backup
 secret_keys.txt
 
+# Personal scripts with local paths
+sync_bitget.sh
+
 # Test reports and logs
 tests/reports/*.json
 tests/reports/*.html
