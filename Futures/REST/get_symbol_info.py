@@ -7,16 +7,11 @@ Bitget USDT Perpetual Futures - Get Symbol Info
 import requests
 import json
 import os
-from datetime import datetime
 
 # Параметры запроса
 FUTURES_PARAMS = {
     'productType': 'USDT-FUTURES'
 }
-
-# Путь для сохранения ответа
-RESPONSE_DIR = os.path.join(os.path.dirname(__file__), '../../docs/response examples/Futures')
-os.makedirs(RESPONSE_DIR, exist_ok=True)
 
 config_path = os.path.join(os.path.dirname(__file__), '../../config.json')
 
@@ -49,18 +44,6 @@ def main():
     result = get_symbol_info()
     
     if result:
-        # Сохраняем в файл
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"futures_symbols_{timestamp}.json"
-        filepath = os.path.join(RESPONSE_DIR, filename)
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
-        
-        print(f"Futures symbols saved to: {filepath}")
-        print(f"Total symbols: {len(result.get('data', []))}")
-        
-        # Также выводим JSON в консоль
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
         print("Failed to get symbol info")
