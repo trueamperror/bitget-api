@@ -5,6 +5,9 @@ Bitget USDT Perpetual Futures WebSocket - Trades Channel
 Канал для получения данных о торгах фьючерсов в реальном времени.
 Показывает последние сделки с ценами и объемами.
 
+МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
+Больше никакого форматирования - только оригинальные поля биржи.
+
 Документация: https://www.bitget.com/api-doc/contract/websocket/public/Trades-Channel
 
 Структура данных:
@@ -21,7 +24,6 @@ import ssl
 import websockets
 from datetime import datetime
 
-
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
@@ -31,13 +33,11 @@ def load_config():
         print("❌ Файл config.json не найден!")
         return None
 
-
 class FuturesTradesChannel:
     def __init__(self, config):
         self.config = config
         self.ws = None
         self.symbols = []
-        self.trade_count = 0
         self.trade_stats = {}
         
     async def connect(self):
@@ -165,73 +165,18 @@ class FuturesTradesChannel:
             print(f"💱 {symbol} │ ID: {trade_id}")
             print(f"{side_emoji} {side_text} │ ${price:,.4f} × {size:,.0f} = ${trade_value:,.2f} {size_indicator}")
             
-            # Показываем краткую статистику каждые 25 сделок
-            if self.trade_count % 25 == 0:
-                self.show_stats(symbol)
-            
-            print("─" * 60)
-    
-    def show_stats(self, symbol):
-        """Показать статистику торгов"""
-        if symbol not in self.trade_stats:
-            return
-        
-        stats = self.trade_stats[symbol]
-        total_trades = stats['buy_count'] + stats['sell_count']
-        total_volume = stats['buy_volume'] + stats['sell_volume']
-        total_value = stats['buy_value'] + stats['sell_value']
-        
-        if total_trades == 0:
-            return
-        
-        buy_percent = (stats['buy_count'] / total_trades) * 100
-        sell_percent = (stats['sell_count'] / total_trades) * 100
-        
-        buy_value_percent = (stats['buy_value'] / total_value) * 100 if total_value > 0 else 0
-        sell_value_percent = (stats['sell_value'] / total_value) * 100 if total_value > 0 else 0
-        
-        print(f"\\n📊 СТАТИСТИКА FUTURES {symbol}")
-        print(f"🔢 Всего сделок: {total_trades}")
-        print(f"🟢 Лонги: {stats['buy_count']} ({buy_percent:.1f}%) │ Объем: ${stats['buy_value']:,.0f} ({buy_value_percent:.1f}%)")
-        print(f"🔴 Шорты: {stats['sell_count']} ({sell_percent:.1f}%) │ Объем: ${stats['sell_value']:,.0f} ({sell_value_percent:.1f}%)")
-        print(f"📈 Макс. цена: ${stats['price_high']:,.4f}")
-        print(f"📉 Мин. цена: ${stats['price_low']:,.4f}")
-        print(f"💎 Общий объем: {total_volume:,.0f} контрактов (${total_value:,.0f})")
-        print(f"🐋 Крупные сделки: {stats['large_trades']} (>${10000:,})")
-        print(f"📊 Средний размер: ${stats['avg_trade_size']:,.2f}")
-        
-        # Индикатор давления
-        if buy_value_percent > 60:
-            pressure = "🟢 ПОКУПАТЕЛЬСКОЕ ДАВЛЕНИЕ"
-        elif sell_value_percent > 60:
-            pressure = "🔴 ПРОДАВАТЕЛЬСКОЕ ДАВЛЕНИЕ"
-        else:
-            pressure = "⚪ СБАЛАНСИРОВАННЫЙ РЫНОК"
-        
-        print(f"📈 Рыночное давление: {pressure}")
+    def show_trade_statistics(self):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
     
     async def handle_message(self, message):
-        """Обработка входящих сообщений"""
+        """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
-            
-            # Обработка ответа на подписку
-            if data.get('event') == 'subscribe':
-                if data.get('code') == '0':
-                    channel = data.get('arg', {}).get('channel', 'unknown')
-                    symbol = data.get('arg', {}).get('instId', 'unknown')
-                    print(f"✅ Подписка успешна: {symbol} ({channel})")
-                else:
-                    print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка данных торгов
-            elif data.get('action') in ['snapshot', 'update']:
-                channel = data.get('arg', {}).get('channel', '')
-                if channel == 'trade':
-                    self.format_trade_data(data)
+            print(json.dumps(data, indent=4, ensure_ascii=False))
             
             # Пинг-понг
-            elif 'ping' in data:
+            if 'ping' in data:
                 pong_message = {'pong': data['ping']}
                 if self.ws:
                     await self.ws.send(json.dumps(pong_message))
@@ -240,7 +185,6 @@ class FuturesTradesChannel:
             print(f"❌ Ошибка декодирования JSON: {message}")
         except Exception as e:
             print(f"❌ Ошибка обработки сообщения: {e}")
-    
     async def listen(self):
         """Прослушивание сообщений"""
         try:
@@ -256,15 +200,10 @@ class FuturesTradesChannel:
         """Отключение от WebSocket"""
         if self.ws:
             await self.ws.close()
-            print(f"🔌 Отключение от WebSocket. Всего сделок: {self.trade_count}")
-            
-            # Финальная статистика
-            for symbol in self.symbols:
-                self.show_stats(symbol)
-
+            print("🔌 Отключение от WebSocket")
 
 async def monitor_single_futures_trades():
-    """Мониторинг торгов одного фьючерса"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -294,9 +233,8 @@ async def monitor_single_futures_trades():
     finally:
         await trades_client.disconnect()
 
-
 async def monitor_multiple_futures_trades():
-    """Мониторинг торгов нескольких фьючерсов"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -330,9 +268,8 @@ async def monitor_multiple_futures_trades():
     finally:
         await trades_client.disconnect()
 
-
 async def whale_trades_monitor():
-    """Мониторинг крупных сделок (китов)"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -389,9 +326,8 @@ async def whale_trades_monitor():
     finally:
         await trades_client.disconnect()
 
-
 async def market_pressure_analysis():
-    """Анализ рыночного давления"""
+    """Упрощенный трекер - показывает только JSON"""
     config = load_config()
     if not config:
         return
@@ -452,10 +388,9 @@ async def market_pressure_analysis():
     finally:
         await trades_client.disconnect()
 
-
 async def main():
     """Основная функция"""
-    print("⚡ BITGET FUTURES TRADES CHANNEL")
+    print("💥 BITGET FUTURES TRADES CHANNEL (JSON)")
     print("=" * 40)
     
     print("🔌 Выберите режим мониторинга:")
@@ -480,7 +415,6 @@ async def main():
     
     except KeyboardInterrupt:
         print("\\n👋 Программа остановлена")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

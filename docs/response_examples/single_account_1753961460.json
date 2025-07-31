@@ -1,0 +1,43 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/v2/mix/account/account",
+    "params": {
+      "symbol": "dogeusdt",
+      "productType": "USDT-FUTURES",
+      "marginCoin": "usdt"
+    }
+  },
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1753961460328,
+    "data": {
+      "marginCoin": "USDT",
+      "locked": "0",
+      "available": "47.24873634",
+      "crossedMaxAvailable": "47.24873634",
+      "isolatedMaxAvailable": "47.24873634",
+      "maxTransferOut": "47.24873634",
+      "accountEquity": "47.24873634",
+      "usdtEquity": "47.248736349467",
+      "btcEquity": "0.000398819532",
+      "crossedRiskRate": "0",
+      "crossedMarginLeverage": 10,
+      "isolatedLongLever": 10,
+      "isolatedShortLever": 10,
+      "marginMode": "crossed",
+      "posMode": "one_way_mode",
+      "unrealizedPL": "0",
+      "coupon": "0",
+      "crossedUnrealizedPL": "0",
+      "isolatedUnrealizedPL": "",
+      "grant": "",
+      "assetMode": "single",
+      "isolatedMargin": null,
+      "crossedMargin": null
+    }
+  },
+  "status_code": 200,
+  "timestamp": "2025-07-31T18:31:00.309178"
+}

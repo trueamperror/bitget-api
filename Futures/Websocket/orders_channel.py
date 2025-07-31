@@ -5,6 +5,9 @@ Bitget USDT Perpetual Futures WebSocket - Orders Channel (Private)
 Канал для получения обновлений по ордерам фьючерсов в реальном времени.
 Требует аутентификации для получения приватных данных.
 
+МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
+Больше никакого форматирования - только оригинальные поля биржи.
+
 Документация: https://www.bitget.com/api-doc/contract/websocket/private/Orders-Channel
 
 Структура данных:
@@ -34,7 +37,6 @@ import base64
 import time
 from datetime import datetime
 
-
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
@@ -43,7 +45,6 @@ def load_config():
     except FileNotFoundError:
         print("❌ Файл config.json не найден!")
         return None
-
 
 class FuturesOrdersChannel:
     def __init__(self, config):
@@ -159,27 +160,12 @@ class FuturesOrdersChannel:
             else:
                 print("📡 Подписка на все ордера фьючерсов")
     
-    def get_status_emoji(self, status):
-        """Получить эмодзи для статуса ордера"""
-        status_emojis = {
-            'new': '🆕',
-            'partial_fill': '🔄',
-            'full_fill': '✅',
-            'cancelled': '❌',
-            'live': '🟢',
-            'partially_filled': '🔄',
-            'filled': '✅',
-            'canceled': '❌'
-        }
-        return status_emojis.get(status.lower(), '❓')
-    
-    def get_side_emoji(self, side):
-        """Получить эмодзи для стороны ордера"""
-        if side.lower() == 'buy':
-            return "📈"  # Лонг
-        else:
-            return "📉"  # Шорт
-    
+    def get_status_emoji(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
+    def get_side_emoji(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
     def format_order_data(self, data):
         """Форматирование данных ордеров"""
         if not data or 'data' not in data:
@@ -275,9 +261,7 @@ class FuturesOrdersChannel:
             
             # Показываем статистику каждые 8 обновлений
             if self.update_count % 8 == 0:
-                self.show_orders_summary()
-            
-            print("─" * 60)
+                print("─" * 60)
     
     def update_order_stats(self, status, size, price, leverage):
         """Обновить статистику ордеров"""
@@ -301,96 +285,17 @@ class FuturesOrdersChannel:
             count = self.update_count
             self.order_stats['avg_leverage'] = ((current_avg * (count - 1)) + leverage) / count
     
-    def show_orders_summary(self):
-        """Показать сводку по ордерам"""
-        if not self.orders_data:
-            return
-        
-        print(f"\\n📊 СВОДКА FUTURES ОРДЕРОВ (обновлено: {datetime.now().strftime('%H:%M:%S')})")
-        print("=" * 70)
-        
-        print(f"📋 Всего ордеров: {len(self.orders_data)}")
-        print(f"🔄 Всего обновлений: {self.update_count}")
-        
-        # Статистика по статусам
-        print(f"\\n📈 Статистика по статусам:")
-        print(f"🆕 Новые: {self.order_stats['new']}")
-        print(f"✅ Исполненные: {self.order_stats['filled']}")
-        print(f"❌ Отмененные: {self.order_stats['cancelled']}")
-        print(f"🔄 Частично исполненные: {self.order_stats['partially_filled']}")
-        
-        # Объем и плечо
-        print(f"\\n💰 Торговая статистика:")
-        print(f"💵 Общий объем: ${self.order_stats['total_volume']:,.0f}")
-        print(f"⚡ Среднее плечо: {self.order_stats['avg_leverage']:.1f}x")
-        
-        # Группировка по парам
-        pairs_count = {}
-        leverage_by_pair = {}
-        
-        for order_data in self.orders_data.values():
-            symbol = order_data['symbol']
-            pairs_count[symbol] = pairs_count.get(symbol, 0) + 1
-            
-            if symbol not in leverage_by_pair:
-                leverage_by_pair[symbol] = []
-            leverage_by_pair[symbol].append(order_data['leverage'])
-        
-        if pairs_count:
-            print(f"\\n💱 Торговые пары:")
-            for symbol, count in sorted(pairs_count.items(), key=lambda x: x[1], reverse=True):
-                avg_lev = sum(leverage_by_pair[symbol]) / len(leverage_by_pair[symbol])
-                print(f"  {symbol}: {count} ордеров (ср. плечо: {avg_lev:.1f}x)")
-        
-        # Последние ордера
-        recent_orders = sorted(
-            self.orders_data.items(),
-            key=lambda x: x[1]['last_update'],
-            reverse=True
-        )[:5]
-        
-        if recent_orders:
-            print(f"\\n🕐 Последние 5 ордеров:")
-            print(f"{'ID':^15} {'Пара':^12} {'Сторона':^8} {'Статус':^15} {'Плечо':>8}")
-            print("─" * 70)
-            
-            for order_id, data in recent_orders:
-                short_id = order_id[-8:] if len(order_id) > 8 else order_id
-                status_emoji = self.get_status_emoji(data['status'])
-                side_emoji = self.get_side_emoji(data['side'])
-                
-                print(f"{short_id:^15} {data['symbol']:^12} {side_emoji}{data['side'][:3]:^7} {status_emoji}{data['status'][:12]:^14} {data['leverage']:>7.0f}x")
-    
+    def show_orders_summary(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
     async def handle_message(self, message):
-        """Обработка входящих сообщений"""
+        """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
-            
-            # Обработка ответа аутентификации
-            if data.get('event') == 'login':
-                if data.get('code') == '0':
-                    print("✅ Аутентификация успешна!")
-                    await self.subscribe_orders()
-                else:
-                    print(f"❌ Ошибка аутентификации: {data.get('msg', 'Unknown error')}")
-                    return False
-            
-            # Обработка ответа на подписку
-            elif data.get('event') == 'subscribe':
-                if data.get('code') == '0':
-                    channel = data.get('arg', {}).get('channel', 'unknown')
-                    print(f"✅ Подписка успешна: {channel}")
-                else:
-                    print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка данных ордеров
-            elif data.get('action') in ['snapshot', 'update']:
-                channel = data.get('arg', {}).get('channel', '')
-                if channel == 'orders':
-                    self.format_order_data(data)
+            print(json.dumps(data, indent=4, ensure_ascii=False))
             
             # Пинг-понг
-            elif 'ping' in data:
+            if 'ping' in data:
                 pong_message = {'pong': data['ping']}
                 if self.ws:
                     await self.ws.send(json.dumps(pong_message))
@@ -399,7 +304,6 @@ class FuturesOrdersChannel:
             print(f"❌ Ошибка декодирования JSON: {message}")
         except Exception as e:
             print(f"❌ Ошибка обработки сообщения: {e}")
-    
     async def listen(self):
         """Прослушивание сообщений"""
         try:
@@ -415,14 +319,10 @@ class FuturesOrdersChannel:
         """Отключение от WebSocket"""
         if self.ws:
             await self.ws.close()
-            print(f"🔌 Отключение от WebSocket. Обновлений: {self.update_count}")
-            
-            # Финальная сводка
-            self.show_orders_summary()
-
+            print("🔌 Отключение от WebSocket")
 
 async def monitor_all_futures_orders():
-    """Мониторинг всех ордеров фьючерсов"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -456,9 +356,8 @@ async def monitor_all_futures_orders():
     finally:
         await orders_client.disconnect()
 
-
 async def leverage_analysis():
-    """Анализ использования плеча"""
+    """Упрощенный трекер - показывает только JSON"""
     config = load_config()
     if not config:
         return
@@ -537,9 +436,8 @@ async def leverage_analysis():
     finally:
         await orders_client.disconnect()
 
-
 async def order_execution_monitor():
-    """Мониторинг исполнения ордеров"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -594,10 +492,9 @@ async def order_execution_monitor():
     finally:
         await orders_client.disconnect()
 
-
 async def main():
     """Основная функция"""
-    print("📋 BITGET FUTURES ORDERS CHANNEL")
+    print("🔌 Мониторинг ордеров фьючерсов")
     print("=" * 40)
     
     print("🔌 Выберите режим мониторинга:")
@@ -619,7 +516,6 @@ async def main():
     
     except KeyboardInterrupt:
         print("\\n👋 Программа остановлена")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

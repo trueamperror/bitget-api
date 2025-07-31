@@ -5,6 +5,9 @@ Bitget Spot WebSocket - Trades Channel
 Канал для получения данных о сделках в реальном времени.
 Показывает каждую совершенную сделку с деталями.
 
+МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
+Больше никакого форматирования - только оригинальные поля биржи.
+
 Документация: https://www.bitget.com/api-doc/spot/websocket/public/Trades-Channel
 
 Структура данных:
@@ -22,7 +25,6 @@ import ssl
 import websockets
 from datetime import datetime
 
-
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
@@ -32,14 +34,11 @@ def load_config():
         print("❌ Файл config.json не найден!")
         return None
 
-
 class SpotTradesChannel:
     def __init__(self, config):
         self.config = config
         self.ws = None
-        self.symbols = []
-        self.trade_count = 0
-        
+        self.symbols = []        
     async def connect(self):
         """Подключение к WebSocket"""
         try:
@@ -77,63 +76,20 @@ class SpotTradesChannel:
         print(f"📡 Подписка на сделки {symbol}")
     
     def format_trade_data(self, data):
-        """Форматирование данных сделок"""
-        if not data or 'data' not in data:
-            return
-        
-        for trade in data['data']:
-            self.trade_count += 1
-            
-            symbol = data.get('arg', {}).get('instId', 'N/A')
-            trade_id = trade.get('tradeId', 'N/A')
-            side = trade.get('side', 'N/A')
-            price = float(trade.get('fillPrice', 0))
-            quantity = float(trade.get('fillQuantity', 0))
-            fill_time = trade.get('fillTime', 0)
-            
-            # Форматирование времени
-            if fill_time:
-                dt = datetime.fromtimestamp(int(fill_time) / 1000)
-                time_str = dt.strftime("%H:%M:%S.%f")[:-3]
-            else:
-                time_str = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-            
-            # Эмодзи для стороны сделки
-            side_emoji = "🟢" if side == "buy" else "🔴"
-            side_arrow = "↗️" if side == "buy" else "↘️"
-            
-            # Расчет стоимости сделки
-            total_value = price * quantity
-            
-            print(f"\n💥 [{time_str}] SPOT TRADE #{self.trade_count}")
-            print(f"💱 {symbol}")
-            print(f"{side_arrow} Сторона: {side_emoji} {side.upper()}")
-            print(f"💰 Цена: ${price:,.4f}")
-            print(f"📊 Количество: {quantity:,.4f}")
-            print(f"💵 Стоимость: ${total_value:,.2f}")
-            print(f"🆔 Trade ID: {trade_id}")
+        """Вывод оригинальных JSON данных от биржи"""
+        print(json.dumps(data, indent=4, ensure_ascii=False))
     
     async def handle_message(self, message):
-        """Обработка входящих сообщений"""
+        """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
-            
-            # Обработка ответа на подписку
-            if data.get('event') == 'subscribe':
-                if data.get('code') == '0':
-                    print(f"✅ Подписка успешна: {data.get('arg', {}).get('instId', 'unknown')}")
-                else:
-                    print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка данных сделок
-            elif data.get('action') == 'snapshot' or data.get('action') == 'update':
-                if data.get('arg', {}).get('channel') == 'trade':
-                    self.format_trade_data(data)
+            print(json.dumps(data, indent=4, ensure_ascii=False))
             
             # Пинг-понг
-            elif 'ping' in data:
+            if 'ping' in data:
                 pong_message = {'pong': data['ping']}
-                await self.ws.send(json.dumps(pong_message))
+                if self.ws:
+                    await self.ws.send(json.dumps(pong_message))
         
         except json.JSONDecodeError:
             print(f"❌ Ошибка декодирования JSON: {message}")
@@ -143,8 +99,9 @@ class SpotTradesChannel:
     async def listen(self):
         """Прослушивание сообщений"""
         try:
-            async for message in self.ws:
-                await self.handle_message(message)
+            if self.ws:
+                async for message in self.ws:
+                    await self.handle_message(message)
         except websockets.exceptions.ConnectionClosed:
             print("🔌 WebSocket соединение закрыто")
         except Exception as e:
@@ -154,11 +111,10 @@ class SpotTradesChannel:
         """Отключение от WebSocket"""
         if self.ws:
             await self.ws.close()
-            print(f"🔌 Отключение от WebSocket. Всего сделок: {self.trade_count}")
-
+            print("🔌 Отключение от WebSocket")
 
 async def monitor_single_symbol():
-    """Мониторинг сделок одного символа"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -188,9 +144,8 @@ async def monitor_single_symbol():
     finally:
         await trades_client.disconnect()
 
-
 async def monitor_multiple_symbols():
-    """Мониторинг сделок нескольких символов"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -224,9 +179,8 @@ async def monitor_multiple_symbols():
     finally:
         await trades_client.disconnect()
 
-
 async def trading_activity_monitor():
-    """Мониторинг торговой активности с статистикой"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -260,18 +214,15 @@ async def trading_activity_monitor():
             await asyncio.wait_for(trades_client.listen(), timeout=duration)
         except asyncio.TimeoutError:
             print(f"\n⏰ Время мониторинга ({duration} сек) истекло")
-            print(f"📊 Статистика: Зафиксировано {trades_client.trade_count} сделок")
         
     except KeyboardInterrupt:
         print("\n👋 Мониторинг остановлен")
-        print(f"📊 Статистика: Зафиксировано {trades_client.trade_count} сделок")
     finally:
         await trades_client.disconnect()
 
-
 async def main():
     """Основная функция"""
-    print("💥 BITGET SPOT TRADES CHANNEL")
+    print("💥 BITGET SPOT TRADES CHANNEL (JSON)")
     print("=" * 40)
     
     print("🔌 Выберите режим мониторинга:")
@@ -293,7 +244,6 @@ async def main():
     
     except KeyboardInterrupt:
         print("\n👋 Программа остановлена")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

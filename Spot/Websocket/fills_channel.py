@@ -5,6 +5,9 @@ Bitget Spot WebSocket - Fills Channel (Private)
 Канал для получения данных об исполненных сделках в реальном времени.
 Требует аутентификации для получения приватных данных.
 
+МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
+Больше никакого форматирования - только оригинальные поля биржи.
+
 Документация: https://www.bitget.com/api-doc/spot/websocket/private/Fills-Channel
 
 Структура данных:
@@ -30,7 +33,6 @@ import base64
 import time
 from datetime import datetime
 
-
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
@@ -39,7 +41,6 @@ def load_config():
     except FileNotFoundError:
         print("❌ Файл config.json не найден!")
         return None
-
 
 class SpotFillsChannel:
     def __init__(self, config):
@@ -223,9 +224,7 @@ class SpotFillsChannel:
             
             # Показываем статистику каждые 5 исполнений
             if self.update_count % 5 == 0:
-                self.show_trading_summary()
-            
-            print("─" * 50)
+                print("─" * 50)
     
     def update_trading_stats(self, inst_id, side, fill_size, fill_price, fee_amount):
         """Обновить торговую статистику"""
@@ -241,90 +240,20 @@ class SpotFillsChannel:
         self.trading_stats['total_volume'] += fill_value
         self.trading_stats['total_fees'] += fee_amount
     
-    def show_trading_summary(self):
-        """Показать торговую сводку"""
-        stats = self.trading_stats
-        
-        print(f"\\n📊 ТОРГОВАЯ СВОДКА (обновлено: {datetime.now().strftime('%H:%M:%S')})")
-        print("=" * 60)
-        
-        print(f"🎯 Всего исполнений: {stats['total_fills']}")
-        print(f"🔄 Всего обновлений: {self.update_count}")
-        print(f"💱 Торговых пар: {len(stats['pairs_traded'])}")
-        
-        # Статистика по сторонам
-        if stats['total_fills'] > 0:
-            buy_percent = (stats['buy_fills'] / stats['total_fills']) * 100
-            sell_percent = (stats['sell_fills'] / stats['total_fills']) * 100
-            
-            print(f"\\n📈 Распределение сделок:")
-            print(f"🟢 Покупки: {stats['buy_fills']} ({buy_percent:.1f}%)")
-            print(f"🔴 Продажи: {stats['sell_fills']} ({sell_percent:.1f}%)")
-        
-        # Объемы и комиссии
-        print(f"\\n💰 Финансовая статистика:")
-        print(f"💵 Общий объем: ${stats['total_volume']:,.2f}")
-        print(f"💸 Общие комиссии: ${stats['total_fees']:,.6f}")
-        
-        if stats['total_volume'] > 0:
-            avg_fee_percent = (stats['total_fees'] / stats['total_volume']) * 100
-            print(f"📈 Средняя комиссия: {avg_fee_percent:.4f}%")
-        
-        # Активные пары
-        if stats['pairs_traded']:
-            pairs_list = ', '.join(list(stats['pairs_traded'])[:5])
-            if len(stats['pairs_traded']) > 5:
-                pairs_list += f" и еще {len(stats['pairs_traded']) - 5}"
-            print(f"\\n💱 Активные пары: {pairs_list}")
-        
-        # Средний размер сделки
-        if stats['total_fills'] > 0:
-            avg_trade_size = stats['total_volume'] / stats['total_fills']
-            print(f"📊 Средний размер сделки: ${avg_trade_size:,.2f}")
-    
-    def show_recent_fills(self, count=10):
-        """Показать последние исполнения"""
-        if not self.fills_data:
-            return
-        
-        recent_fills = sorted(
-            self.fills_data.items(),
-            key=lambda x: x[1]['timestamp'],
-            reverse=True
-        )[:count]
-        
-        print(f"\\n🕐 ПОСЛЕДНИЕ {min(count, len(recent_fills))} ИСПОЛНЕНИЙ:")
-        print(f"{'Trade ID':^15} {'Пара':^12} {'Сторона':^8} {'Размер':>12} {'Цена':>12} {'Сумма':>12}")
-        print("─" * 85)
-        
-        for trade_id, data in recent_fills:
-            short_id = trade_id[-8:] if len(trade_id) > 8 else trade_id
-            side_emoji = "🟢" if data['side'] == "buy" else "🔴"
-            fill_value = data['fillPrice'] * data['fillSize']
-            
-            print(f"{short_id:^15} {data['instId']:^12} {side_emoji}{data['side'][:3]:^7} {data['fillSize']:>12.4f} {data['fillPrice']:>12.4f} ${fill_value:>11.2f}")
-    
+    def show_trading_summary(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
+    def show_recent_fills(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
     async def handle_message(self, message):
-        """Обработка входящих сообщений"""
+        """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
-            
-            # Обработка ответа на подписку
-            if data.get('event') == 'subscribe':
-                if str(data.get('code')) == '0':
-                    channel = data.get('arg', {}).get('channel', 'unknown')
-                    print(f"✅ Подписка успешна: {channel}")
-                else:
-                    print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка данных исполнений
-            elif data.get('action') in ['snapshot', 'update']:
-                channel = data.get('arg', {}).get('channel', '')
-                if channel == 'fills':
-                    self.format_fill_data(data)
+            print(json.dumps(data, indent=4, ensure_ascii=False))
             
             # Пинг-понг
-            elif 'ping' in data:
+            if 'ping' in data:
                 pong_message = {'pong': data['ping']}
                 if self.ws:
                     await self.ws.send(json.dumps(pong_message))
@@ -333,7 +262,6 @@ class SpotFillsChannel:
             print(f"❌ Ошибка декодирования JSON: {message}")
         except Exception as e:
             print(f"❌ Ошибка обработки сообщения: {e}")
-    
     async def listen(self):
         """Прослушивание сообщений"""
         try:
@@ -349,15 +277,10 @@ class SpotFillsChannel:
         """Отключение от WebSocket"""
         if self.ws:
             await self.ws.close()
-            print(f"🔌 Отключение от WebSocket. Обновлений: {self.update_count}")
-            
-            # Финальная сводка
-            self.show_trading_summary()
-            self.show_recent_fills()
-
+            print("🔌 Отключение от WebSocket")
 
 async def monitor_all_fills():
-    """Мониторинг всех исполнений"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -400,9 +323,8 @@ async def monitor_all_fills():
     finally:
         await fills_client.disconnect()
 
-
 async def monitor_pair_fills():
-    """Мониторинг исполнений конкретной пары"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -449,9 +371,8 @@ async def monitor_pair_fills():
     finally:
         await fills_client.disconnect()
 
-
 async def trading_session_analysis():
-    """Анализ торговой сессии с детальной статистикой"""
+    """Упрощенный трекер - показывает только JSON"""
     config = load_config()
     if not config:
         return
@@ -517,10 +438,9 @@ async def trading_session_analysis():
     finally:
         await fills_client.disconnect()
 
-
 async def main():
     """Основная функция"""
-    print("🎯 BITGET SPOT FILLS CHANNEL")
+    print("🔌 Мониторинг спот исполнений")
     print("=" * 40)
     
     print("🔌 Выберите режим мониторинга:")
@@ -542,7 +462,6 @@ async def main():
     
     except KeyboardInterrupt:
         print("\\n👋 Программа остановлена")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

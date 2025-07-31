@@ -5,6 +5,9 @@ Bitget Spot WebSocket - Depth Channel (Order Book)
 Канал для получения данных стакана заявок в реальном времени.
 Показывает лучшие bid/ask цены и объемы.
 
+МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
+Больше никакого форматирования - только оригинальные поля биржи.
+
 Документация: https://www.bitget.com/api-doc/spot/websocket/public/Depth-Channel
 
 Структура данных:
@@ -20,7 +23,6 @@ import ssl
 import websockets
 from datetime import datetime
 
-
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
@@ -30,14 +32,10 @@ def load_config():
         print("❌ Файл config.json не найден!")
         return None
 
-
 class SpotDepthChannel:
     def __init__(self, config):
         self.config = config
-        self.ws = None
-        self.symbols = []
-        self.update_count = 0
-        
+        self.ws = None        
     async def connect(self):
         """Подключение к WebSocket"""
         try:
@@ -79,90 +77,16 @@ class SpotDepthChannel:
             print(f"📡 Подписка на стакан {symbol} ({depth_level})")
     
     def format_depth_data(self, data):
-        """Форматирование данных стакана"""
-        if not data or 'data' not in data:
-            return
-        
-        self.update_count += 1
-        
-        for book_data in data['data']:
-            symbol = data.get('arg', {}).get('instId', 'N/A')
-            asks = book_data.get('asks', [])
-            bids = book_data.get('bids', [])
-            ts = book_data.get('ts', 0)
-            
-            # Форматирование времени
-            if ts:
-                dt = datetime.fromtimestamp(int(ts) / 1000)
-                time_str = dt.strftime("%H:%M:%S.%f")[:-3]
-            else:
-                time_str = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-            
-            print(f"\n📚 [{time_str}] ORDER BOOK #{self.update_count}")
-            print(f"💱 {symbol}")
-            print("=" * 50)
-            
-            # Отображение asks (продажи) - от низкой цены к высокой
-            print("🔴 ASKS (Продажи)")
-            print("   Цена        │ Количество   │ Сумма")
-            print("─" * 45)
-            
-            for i, ask in enumerate(asks[:5]):  # Показываем топ 5
-                price = float(ask[0])
-                size = float(ask[1])
-                total = price * size
-                print(f"   ${price:>10.4f} │ {size:>11.4f} │ ${total:>9.2f}")
-            
-            # Спред
-            if asks and bids:
-                best_ask = float(asks[0][0])
-                best_bid = float(bids[0][0])
-                spread = best_ask - best_bid
-                spread_percent = (spread / best_ask) * 100
-                print(f"         💰 СПРЕД: ${spread:.4f} ({spread_percent:.3f}%)")
-            
-            # Отображение bids (покупки) - от высокой цены к низкой
-            print("🟢 BIDS (Покупки)")
-            print("   Цена        │ Количество   │ Сумма")
-            print("─" * 45)
-            
-            for i, bid in enumerate(bids[:5]):  # Показываем топ 5
-                price = float(bid[0])
-                size = float(bid[1])
-                total = price * size
-                print(f"   ${price:>10.4f} │ {size:>11.4f} │ ${total:>9.2f}")
-            
-            # Статистика
-            total_ask_volume = sum(float(ask[1]) for ask in asks)
-            total_bid_volume = sum(float(bid[1]) for bid in bids)
-            
-            print(f"\n📊 СТАТИСТИКА")
-            print(f"📤 Общий объем asks: {total_ask_volume:.4f}")
-            print(f"📥 Общий объем bids: {total_bid_volume:.4f}")
-            print(f"⚖️ Соотношение bid/ask: {total_bid_volume/total_ask_volume:.3f}")
-    
+        """Вывод оригинальных JSON данных от биржи"""
+        print(json.dumps(data, indent=4, ensure_ascii=False))
     async def handle_message(self, message):
-        """Обработка входящих сообщений"""
+        """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
-            
-            # Обработка ответа на подписку
-            if data.get('event') == 'subscribe':
-                if data.get('code') == '0':
-                    channel = data.get('arg', {}).get('channel', 'unknown')
-                    symbol = data.get('arg', {}).get('instId', 'unknown')
-                    print(f"✅ Подписка успешна: {symbol} ({channel})")
-                else:
-                    print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка данных стакана
-            elif data.get('action') == 'snapshot' or data.get('action') == 'update':
-                channel = data.get('arg', {}).get('channel', '')
-                if 'books' in channel:
-                    self.format_depth_data(data)
+            print(json.dumps(data, indent=4, ensure_ascii=False))
             
             # Пинг-понг
-            elif 'ping' in data:
+            if 'ping' in data:
                 pong_message = {'pong': data['ping']}
                 if self.ws:
                     await self.ws.send(json.dumps(pong_message))
@@ -171,7 +95,6 @@ class SpotDepthChannel:
             print(f"❌ Ошибка декодирования JSON: {message}")
         except Exception as e:
             print(f"❌ Ошибка обработки сообщения: {e}")
-    
     async def listen(self):
         """Прослушивание сообщений"""
         try:
@@ -187,11 +110,10 @@ class SpotDepthChannel:
         """Отключение от WebSocket"""
         if self.ws:
             await self.ws.close()
-            print(f"🔌 Отключение от WebSocket. Обновлений: {self.update_count}")
-
+            print("🔌 Отключение от WebSocket")
 
 async def monitor_top5_depth():
-    """Мониторинг топ-5 уровней стакана"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -221,9 +143,8 @@ async def monitor_top5_depth():
     finally:
         await depth_client.disconnect()
 
-
 async def monitor_full_depth():
-    """Мониторинг полного стакана"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -259,9 +180,8 @@ async def monitor_full_depth():
     finally:
         await depth_client.disconnect()
 
-
 async def spread_monitoring():
-    """Мониторинг спреда"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -300,10 +220,9 @@ async def spread_monitoring():
     finally:
         await depth_client.disconnect()
 
-
 async def main():
     """Основная функция"""
-    print("📚 BITGET SPOT DEPTH CHANNEL")
+    print("CHANNEL") (JSON)
     print("=" * 40)
     
     print("🔌 Выберите режим мониторинга:")
@@ -325,7 +244,6 @@ async def main():
     
     except KeyboardInterrupt:
         print("\n👋 Программа остановлена")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

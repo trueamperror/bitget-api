@@ -5,6 +5,9 @@ Bitget Spot WebSocket - Ticker Channel (Public)
 Канал для получения данных тикеров спот торговли в реальном времени.
 Публичный канал, не требует аутентификации.
 
+МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
+Больше никакого форматирования - только оригинальные поля биржи.
+
 Документация: https://www.bitget.com/api-doc/spot/websocket/public/Tickers-Channel
 
 Структура данных:
@@ -27,7 +30,6 @@ import ssl
 import websockets
 from datetime import datetime
 
-
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
@@ -37,15 +39,10 @@ def load_config():
         print("❌ Файл config.json не найден!")
         return None
 
-
 class SpotTickerChannel:
     def __init__(self, config):
         self.config = config
-        self.ws = None
-        self.ticker_data = {}
-        self.update_count = 0
-        self.price_changes = {}
-        
+        self.ws = None        
     async def connect(self):
         """Подключение к WebSocket"""
         try:
@@ -101,145 +98,19 @@ class SpotTickerChannel:
             await self.ws.send(json.dumps(subscribe_message))
     
     def format_ticker_data(self, data):
-        """Форматирование данных тикеров"""
-        if not data or 'data' not in data:
-            return
-        
-        for ticker in data['data']:
-            self.update_count += 1
-            
-            inst_id = ticker.get('instId', 'N/A')
-            last = float(ticker.get('last', 0))
-            open_24h = float(ticker.get('open24h', 0))
-            high_24h = float(ticker.get('high24h', 0))
-            low_24h = float(ticker.get('low24h', 0))
-            best_bid = float(ticker.get('bestBid', 0))
-            best_ask = float(ticker.get('bestAsk', 0))
-            base_volume = float(ticker.get('baseVolume', 0))
-            quote_volume = float(ticker.get('quoteVolume', 0))
-            change_24h = float(ticker.get('change24h', 0))
-            ts = ticker.get('ts', 0)
-            
-            # Сохраняем предыдущую цену для определения направления
-            prev_price = self.ticker_data.get(inst_id, {}).get('last', last)
-            
-            # Обновляем данные тикера
-            self.ticker_data[inst_id] = {
-                'last': last,
-                'open24h': open_24h,
-                'high24h': high_24h,
-                'low24h': low_24h,
-                'bestBid': best_bid,
-                'bestAsk': best_ask,
-                'baseVolume': base_volume,
-                'quoteVolume': quote_volume,
-                'change24h': change_24h,
-                'ts': ts,
-                'prev_price': prev_price,
-                'last_update': datetime.now()
-            }
-            
-            # Направление изменения цены
-            if last > prev_price:
-                price_direction = "📈"
-                price_color = "🟢"
-            elif last < prev_price:
-                price_direction = "📉" 
-                price_color = "🔴"
-            else:
-                price_direction = "➡️"
-                price_color = "⚪"
-            
-            # Форматирование времени
-            if ts:
-                dt = datetime.fromtimestamp(int(ts) / 1000)
-                time_str = dt.strftime("%H:%M:%S.%f")[:-3]
-            else:
-                time_str = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-            
-            # Расчет спреда
-            spread = best_ask - best_bid if best_ask > 0 and best_bid > 0 else 0
-            spread_percent = (spread / last) * 100 if last > 0 else 0
-            
-            print(f"\\n{price_color} [{time_str}] SPOT TICKER #{self.update_count}")
-            print(f"💱 {inst_id}")
-            print(f"{price_direction} Цена: ${last:,.6f}")
-            print(f"📊 24ч: ${change_24h:+.2f}% (${open_24h:,.6f} → ${last:,.6f})")
-            print(f"📈 Макс: ${high_24h:,.6f} │ 📉 Мин: ${low_24h:,.6f}")
-            print(f"💰 Бид: ${best_bid:,.6f} │ 💸 Аск: ${best_ask:,.6f}")
-            print(f"📏 Спред: ${spread:,.6f} ({spread_percent:.4f}%)")
-            print(f"� Объем: {base_volume:,.2f} {inst_id.split('USDT')[0]} (${quote_volume:,.2f})")
-            
-            # Показываем сводку каждые 10 обновлений
-            if self.update_count % 10 == 0:
-                self.show_market_summary()
-            
-            print("─" * 60)
-    
-    def show_market_summary(self):
-        """Показать сводку рынка"""
-        if not self.ticker_data:
-            return
-        
-        print(f"\\n📊 СВОДКА РЫНКА SPOT (обновлено: {datetime.now().strftime('%H:%M:%S')})")
-        print("=" * 70)
-        
-        # Топ 5 по объему
-        top_volume = sorted(
-            self.ticker_data.items(),
-            key=lambda x: x[1]['quoteVolume'],
-            reverse=True
-        )[:5]
-        
-        print("💰 ТОП 5 ПО ОБЪЕМУ:")
-        for symbol, data in top_volume:
-            print(f"   {symbol}: ${data['quoteVolume']:,.0f} (${data['last']:,.6f})")
-        
-        # Топ 5 растущих
-        top_gainers = sorted(
-            self.ticker_data.items(),
-            key=lambda x: x[1]['change24h'],
-            reverse=True
-        )[:5]
-        
-        print("\\n🚀 ТОП 5 РАСТУЩИХ:")
-        for symbol, data in top_gainers:
-            print(f"   {symbol}: +{data['change24h']:.2f}% (${data['last']:,.6f})")
-        
-        # Топ 5 падающих
-        top_losers = sorted(
-            self.ticker_data.items(),
-            key=lambda x: x[1]['change24h']
-        )[:5]
-        
-        print("\\n📉 ТОП 5 ПАДАЮЩИХ:")
-        for symbol, data in top_losers:
-            print(f"   {symbol}: {data['change24h']:.2f}% (${data['last']:,.6f})")
-        
-        print(f"\\n📈 Всего тикеров: {len(self.ticker_data)}")
-        print(f"🔄 Всего обновлений: {self.update_count}")
-    
+        """Вывод оригинальных JSON данных от биржи"""
+        print(json.dumps(data, indent=4, ensure_ascii=False))
+    def show_market_summary(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
     async def handle_message(self, message):
-        """Обработка входящих сообщений"""
+        """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
-            
-            # Обработка ответа на подписку
-            if data.get('event') == 'subscribe':
-                if str(data.get('code')) == '0':
-                    channel = data.get('arg', {}).get('channel', 'unknown')
-                    print(f"✅ Подписка успешна: {channel}")
-                else:
-                    print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка данных тикеров
-            elif data.get('action') in ['snapshot', 'update']:
-                channel = data.get('arg', {}).get('channel', '')
-                if channel == 'ticker':
-                    self.format_ticker_data(data)
+            print(json.dumps(data, indent=4, ensure_ascii=False))
             
             # Пинг-понг
-            elif 'ping' in data:
+            if 'ping' in data:
                 pong_message = {'pong': data['ping']}
                 if self.ws:
                     await self.ws.send(json.dumps(pong_message))
@@ -248,7 +119,6 @@ class SpotTickerChannel:
             print(f"❌ Ошибка декодирования JSON: {message}")
         except Exception as e:
             print(f"❌ Ошибка обработки сообщения: {e}")
-    
     async def listen(self):
         """Прослушивание сообщений"""
         try:
@@ -264,14 +134,10 @@ class SpotTickerChannel:
         """Отключение от WebSocket"""
         if self.ws:
             await self.ws.close()
-            print(f"🔌 Отключение от WebSocket. Обновлений: {self.update_count}")
-            
-            # Финальная сводка
-            self.show_market_summary()
-
+            print("🔌 Отключение от WebSocket")
 
 async def monitor_specific_ticker():
-    """Мониторинг конкретного тикера"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -300,7 +166,6 @@ async def monitor_specific_ticker():
         print("\\n👋 Мониторинг остановлен")
     finally:
         await ticker_client.disconnect()
-
 
 async def market_scanner():
     """Сканер рынка"""
@@ -359,10 +224,9 @@ async def market_scanner():
     finally:
         await ticker_client.disconnect()
 
-
 async def main():
     """Основная функция"""
-    print("📈 BITGET SPOT TICKER CHANNEL")
+    print("CHANNEL") (JSON)
     print("=" * 40)
     
     print("🔌 Выберите режим мониторинга:")
@@ -381,7 +245,6 @@ async def main():
     
     except KeyboardInterrupt:
         print("\\n👋 Программа остановлена")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

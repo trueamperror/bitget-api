@@ -5,17 +5,10 @@ Bitget USDT Perpetual Futures WebSocket - Account Channel (Private)
 Канал для получения данных баланса фьючерсного аккаунта в реальном времени.
 Требует аутентификации для получения приватных данных.
 
-Документация: https://www.bitget.com/api-doc/contract/websocket/private/Account-Channel
+МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
+Больше никакого форматирования - только оригинальные поля биржи.
 
-Структура данных:
-- marginCoin: валюта маржи (обычно USDT)
-- locked: заблокированный баланс
-- available: доступный баланс
-- crossMargin: кросс-маржа
-- isolatedMargin: изолированная маржа
-- maxOpenPosAvailable: макс. доступно для открытия позиций
-- equity: собственный капитал
-- upl: нереализованная прибыль/убыток
+Документация: https://www.bitget.com/api-doc/contract/websocket/private/Account-Channel
 """
 
 import asyncio
@@ -28,7 +21,6 @@ import base64
 import time
 from datetime import datetime
 
-
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
@@ -38,14 +30,10 @@ def load_config():
         print("❌ Файл config.json не найден!")
         return None
 
-
 class FuturesAccountChannel:
     def __init__(self, config):
         self.config = config
         self.ws = None
-        self.account_data = {}
-        self.update_count = 0
-        self.balance_history = []
         
     def generate_signature(self, timestamp, method, request_path, body=''):
         """Генерация подписи для аутентификации согласно документации Bitget"""
@@ -187,201 +175,29 @@ class FuturesAccountChannel:
         return False
     
     def format_account_data(self, data):
-        """Форматирование данных аккаунта"""
-        if not data or 'data' not in data:
-            return
-        
-        self.update_count += 1
-        
-        for account_update in data['data']:
-            margin_coin = account_update.get('marginCoin', 'N/A')
-            # Согласно документации Bitget, используются эти поля
-            frozen = float(account_update.get('frozen', 0))  # заблокированные средства
-            available = float(account_update.get('available', 0))  # доступные средства
-            max_open_pos = float(account_update.get('maxOpenPosAvailable', 0))
-            max_transfer_out = float(account_update.get('maxTransferOut', 0))
-            equity = float(account_update.get('equity', 0))  # собственный капитал
-            usdt_equity = float(account_update.get('usdtEquity', 0))  # капитал в USDT
-            crossed_risk_rate = float(account_update.get('crossedRiskRate', 0))  # риск в кросс-режиме
-            unrealized_pl = float(account_update.get('unrealizedPL', 0))  # нереализованная прибыль/убыток
-            update_time = account_update.get('ts', 0)  # временная метка
-            
-            # Обновляем данные аккаунта
-            self.account_data[margin_coin] = {
-                'frozen': frozen,
-                'available': available,
-                'maxOpenPosAvailable': max_open_pos,
-                'maxTransferOut': max_transfer_out,
-                'equity': equity,
-                'usdtEquity': usdt_equity,
-                'crossedRiskRate': crossed_risk_rate,
-                'unrealizedPL': unrealized_pl,
-                'updateTime': update_time,
-                'last_update': datetime.now()
-            }
-            
-            # Сохраняем историю баланса
-            self.balance_history.append({
-                'equity': equity,
-                'unrealizedPL': unrealized_pl,
-                'available': available,
-                'timestamp': datetime.now()
-            })
-            
-            # Ограничиваем историю
-            if len(self.balance_history) > 100:
-                self.balance_history = self.balance_history[-50:]
-            
-            # Форматирование времени
-            if update_time:
-                dt = datetime.fromtimestamp(int(update_time) / 1000)
-                time_str = dt.strftime("%H:%M:%S.%f")[:-3]
-            else:
-                time_str = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-            
-            # Общий баланс
-            total_balance = available + frozen
-            
-            print(f"\\n💰 [{time_str}] FUTURES АККАУНТ #{self.update_count}")
-            print(f"🪙 Валюта: {margin_coin}")
-            print(f"💵 Собственный капитал: ${equity:,.2f}")
-            print(f"💰 Доступно: ${available:,.2f}")
-            print(f"🔒 Заблокировано: ${frozen:,.2f}")
-            print(f"📊 Общий баланс: ${total_balance:,.2f}")
-            
-            # PnL информация
-            upl_emoji = "🟢" if unrealized_pl >= 0 else "🔴"
-            print(f"{upl_emoji} Нереализованный PnL: ${unrealized_pl:+,.2f}")
-            
-            # Дополнительная информация
-            if max_open_pos > 0:
-                print(f"🎯 Доступно для позиций: ${max_open_pos:,.2f}")
-                pos_percentage = (max_open_pos / equity) * 100 if equity > 0 else 0
-                print(f"� % от капитала: {pos_percentage:.2f}%")
-            
-            if max_transfer_out > 0:
-                print(f"� Макс. вывод: ${max_transfer_out:,.2f}")
-            
-            if crossed_risk_rate > 0:
-                print(f"⚠️ Риск кросс-маржи: {crossed_risk_rate:.4f}")
-            
-            if usdt_equity != equity:
-                print(f"� Капитал в USDT: ${usdt_equity:,.2f}")
-            
-            # Показываем расширенную статистику каждые 10 обновлений
-            if self.update_count % 10 == 0:
-                self.show_account_analytics()
-            
-            print("─" * 50)
+        """Вывод оригинальных JSON данных от биржи"""
+        print(json.dumps(data, indent=4, ensure_ascii=False))
     
-    def show_account_analytics(self):
-        """Показать аналитику аккаунта"""
-        if len(self.balance_history) < 5:
-            return
-        
-        print(f"\\n📈 АНАЛИТИКА АККАУНТА (обновлено: {datetime.now().strftime('%H:%M:%S')})")
-        print("=" * 60)
-        
-        # Статистика по последним 10 записям
-        recent_history = self.balance_history[-10:]
-        
-        equity_values = [entry['equity'] for entry in recent_history]
-        upl_values = [entry['unrealizedPL'] for entry in recent_history]
-        
-        if len(equity_values) > 1:
-            equity_change = equity_values[-1] - equity_values[0]
-            equity_change_percent = (equity_change / equity_values[0]) * 100 if equity_values[0] > 0 else 0
-            
-            avg_equity = sum(equity_values) / len(equity_values)
-            max_equity = max(equity_values)
-            min_equity = min(equity_values)
-            
-            print(f"💰 Динамика капитала (последние {len(equity_values)} обновлений):")
-            print(f"   Изменение: ${equity_change:+,.2f} ({equity_change_percent:+.2f}%)")
-            print(f"   Средний: ${avg_equity:,.2f}")
-            print(f"   Максимум: ${max_equity:,.2f}")
-            print(f"   Минимум: ${min_equity:,.2f}")
-        
-        # Анализ PnL
-        if upl_values:
-            current_upl = upl_values[-1]
-            max_upl = max(upl_values)
-            min_upl = min(upl_values)
-            
-            print(f"\\n📊 Анализ PnL:")
-            print(f"   Текущий: ${current_upl:+,.2f}")
-            print(f"   Лучший: ${max_upl:+,.2f}")
-            print(f"   Худший: ${min_upl:+,.2f}")
-            print(f"   Размах: ${max_upl - min_upl:,.2f}")
-        
-        # Определение тренда
-        if len(equity_values) >= 3:
-            recent_trend = equity_values[-3:]
-            if all(recent_trend[i] <= recent_trend[i+1] for i in range(len(recent_trend)-1)):
-                trend = "📈 ВОСХОДЯЩИЙ"
-            elif all(recent_trend[i] >= recent_trend[i+1] for i in range(len(recent_trend)-1)):
-                trend = "📉 НИСХОДЯЩИЙ"
-            else:
-                trend = "📊 БОКОВОЙ"
-            
-            print(f"\\n📈 Тренд капитала: {trend}")
-        
-        # Риск-метрики
-        current_account = list(self.account_data.values())[0] if self.account_data else None
-        if current_account:
-            equity = current_account['equity']
-            crossed_risk_rate = current_account['crossedRiskRate']
-            
-            if equity > 0 and crossed_risk_rate > 0:
-                risk_level = ""
-                
-                if crossed_risk_rate < 0.1:
-                    risk_level = "🟢 НИЗКИЙ"
-                elif crossed_risk_rate < 0.3:
-                    risk_level = "🟡 УМЕРЕННЫЙ"
-                elif crossed_risk_rate < 0.5:
-                    risk_level = "🟠 ПОВЫШЕННЫЙ"
-                else:
-                    risk_level = "🔴 ВЫСОКИЙ"
-                
-                print(f"\\n⚠️ Риск-анализ:")
-                print(f"   Коэффициент риска: {crossed_risk_rate:.4f}")
-                print(f"   Уровень риска: {risk_level}")
-    
+    def show_account_analytics(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
     async def handle_message(self, message):
-        """Обработка входящих сообщений"""
+        """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
+            print(json.dumps(data, indent=4, ensure_ascii=False))
             
-            # Обработка ответа на подписку
-            if data.get('event') == 'subscribe':
-                if str(data.get('code')) == '0':
-                    channel = data.get('arg', {}).get('channel', 'unknown')
-                    print(f"✅ Подписка успешна: {channel}")
-                else:
-                    print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка ошибок
-            elif data.get('event') == 'error':
-                print(f"❌ Ошибка сервера: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка данных аккаунта
-            elif data.get('action') in ['snapshot', 'update']:
+            # Обработка данных аккаунта для вызова format_account_data
+            if data.get('action') in ['snapshot', 'update']:
                 channel = data.get('arg', {}).get('channel', '')
                 if channel == 'account':
                     self.format_account_data(data)
-                else:
-                    print(f"🤔 Неожиданный канал: {channel}")
             
             # Пинг-понг
             elif 'ping' in data:
                 pong_message = {'pong': data['ping']}
                 if self.ws:
                     await self.ws.send(json.dumps(pong_message))
-            
-            # Любые другие сообщения
-            else:
-                print(f"ℹ️ Неизвестное сообщение: {data}")
         
         except json.JSONDecodeError:
             print(f"❌ Ошибка декодирования JSON: {message}")
@@ -408,14 +224,10 @@ class FuturesAccountChannel:
         """Отключение от WebSocket"""
         if self.ws:
             await self.ws.close()
-            print(f"🔌 Отключение от WebSocket. Обновлений: {self.update_count}")
-            
-            # Финальная аналитика
-            self.show_account_analytics()
-
+            print("🔌 Отключение от WebSocket")
 
 async def monitor_futures_account():
-    """Мониторинг фьючерсного аккаунта"""
+    """Мониторинг фьючерсного аккаунта - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -427,7 +239,7 @@ async def monitor_futures_account():
             print(f"❌ Отсутствует {key} в конфигурации")
             return
     
-    print("💰 МОНИТОРИНГ FUTURES АККАУНТА")
+    print("💰 МОНИТОРИНГ FUTURES АККАУНТА (JSON)")
     print("=" * 40)
     print("🔐 Требуется аутентификация для приватных данных")
     
@@ -437,22 +249,18 @@ async def monitor_futures_account():
         if not await account_client.connect():
             return
         
-        # Ждем успешной аутентификации
         if not await account_client.authenticate():
             print("❌ Не удалось аутентифицироваться")
             return
         
-        # Небольшая пауза после аутентификации
         await asyncio.sleep(1)
         
-        # Подписываемся на аккаунт
         if not await account_client.subscribe_account():
             print("❌ Не удалось подписаться на аккаунт")
             return
         
-        print("🔄 Мониторинг баланса фьючерсного аккаунта...")
+        print("🔄 Мониторинг - показываем оригинальные JSON сообщения от биржи...")
         print("💡 Нажмите Ctrl+C для остановки")
-        print("📊 Откройте/закройте позицию для получения обновлений...")
         
         await account_client.listen()
         
@@ -465,9 +273,8 @@ async def monitor_futures_account():
     finally:
         await account_client.disconnect()
 
-
 async def equity_growth_tracker():
-    """Трекер роста капитала"""
+    """Упрощенный трекер - показывает только JSON"""
     config = load_config()
     if not config:
         return
@@ -479,7 +286,7 @@ async def equity_growth_tracker():
             print(f"❌ Отсутствует {key} в конфигурации")
             return
     
-    print("📈 ТРЕКЕР РОСТА КАПИТАЛА")
+    print("📈 JSON ТРЕКЕР")
     print("=" * 40)
     
     duration = input("⏰ Время трекинга в секундах (по умолчанию 600): ").strip()
@@ -494,77 +301,33 @@ async def equity_growth_tracker():
         if not await account_client.connect():
             return
         
-        # Ждем успешной аутентификации
         if not await account_client.authenticate():
             print("❌ Не удалось аутентифицироваться")
             return
         
-        # Подписываемся на аккаунт
         await account_client.subscribe_account()
         
-        print(f"🔄 Трекинг роста капитала в течение {duration} секунд...")
+        print(f"🔄 Показываем JSON сообщения в течение {duration} секунд...")
         print("💡 Нажмите Ctrl+C для остановки")
-        
-        start_time = time.time()
-        initial_equity = None
         
         try:
             await asyncio.wait_for(account_client.listen(), timeout=duration)
         except asyncio.TimeoutError:
-            end_time = time.time()
-            session_duration = end_time - start_time
-            
-            print(f"\\n⏰ Трекинг завершен ({session_duration:.0f} сек)")
-            
-            # Анализ роста
-            if account_client.balance_history:
-                initial_equity = account_client.balance_history[0]['equity']
-                final_equity = account_client.balance_history[-1]['equity']
-                
-                growth = final_equity - initial_equity
-                growth_percent = (growth / initial_equity) * 100 if initial_equity > 0 else 0
-                
-                print(f"\\n📊 РЕЗУЛЬТАТЫ ТРЕКИНГА:")
-                print(f"💰 Начальный капитал: ${initial_equity:,.2f}")
-                print(f"💰 Финальный капитал: ${final_equity:,.2f}")
-                print(f"📈 Изменение: ${growth:+,.2f} ({growth_percent:+.2f}%)")
-                
-                # Оценка производительности
-                if growth_percent > 5:
-                    performance = "🚀 ОТЛИЧНЫЙ РОСТ"
-                elif growth_percent > 1:
-                    performance = "🟢 ПОЛОЖИТЕЛЬНЫЙ РОСТ"
-                elif growth_percent > -1:
-                    performance = "⚪ СТАБИЛЬНОСТЬ"
-                elif growth_percent > -5:
-                    performance = "🟠 НЕБОЛЬШОЙ УБЫТОК"
-                else:
-                    performance = "🔴 ЗНАЧИТЕЛЬНЫЙ УБЫТОК"
-                
-                print(f"📊 Оценка: {performance}")
-                
-                # Среднечасовая доходность
-                hours = session_duration / 3600
-                if hours > 0:
-                    hourly_return = growth_percent / hours
-                    print(f"⏰ Среднечасовая доходность: {hourly_return:+.2f}%")
-            else:
-                print("📭 Недостаточно данных для анализа")
+            print(f"\n⏰ Трекинг завершен")
         
     except KeyboardInterrupt:
-        print("\\n👋 Трекинг остановлен")
+        print("\n👋 Трекинг остановлен")
     finally:
         await account_client.disconnect()
 
-
 async def main():
     """Основная функция"""
-    print("💰 BITGET FUTURES ACCOUNT CHANNEL")
+    print("💰 BITGET FUTURES ACCOUNT CHANNEL (JSON)")
     print("=" * 40)
     
     print("🔌 Выберите режим мониторинга:")
-    print("1. 💰 Мониторинг аккаунта")
-    print("2. 📈 Трекер роста капитала")
+    print("1. 💰 Мониторинг аккаунта (JSON)")
+    print("2. 📈 JSON трекер")
     
     try:
         choice = input("Ваш выбор (1-2): ").strip()
@@ -577,8 +340,7 @@ async def main():
             print("❌ Неверный выбор")
     
     except KeyboardInterrupt:
-        print("\\n👋 Программа остановлена")
-
+        print("\n👋 Программа остановлена")
 
 if __name__ == "__main__":
     asyncio.run(main())

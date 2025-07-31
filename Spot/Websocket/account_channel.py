@@ -5,6 +5,9 @@ Bitget Spot WebSocket - Account Channel (Private)
 Канал для получения данных баланса аккаунта в реальном времени.
 Требует аутентификации для получения приватных данных.
 
+МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
+Больше никакого форматирования - только оригинальные поля биржи.
+
 Документация: https://www.bitget.com/api-doc/spot/websocket/private/Account-Channel
 
 Структура данных:
@@ -24,7 +27,6 @@ import base64
 import time
 from datetime import datetime
 
-
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
@@ -34,14 +36,11 @@ def load_config():
         print("❌ Файл config.json не найден!")
         return None
 
-
 class SpotAccountChannel:
     def __init__(self, config):
         self.config = config
         self.ws = None
-        self.balance_data = {}
-        self.update_count = 0
-        
+                
     def generate_signature(self, timestamp, method, request_path, body=''):
         """Генерация подписи для аутентификации"""
         message = str(timestamp) + method + request_path + body
@@ -139,128 +138,20 @@ class SpotAccountChannel:
             print("📡 Подписка на изменения баланса аккаунта")
     
     def format_balance_data(self, data):
-        """Форматирование данных баланса"""
-        if not data or 'data' not in data:
-            return
-        
-        self.update_count += 1
-        
-        for balance_update in data['data']:
-            coin = balance_update.get('coin', 'N/A')
-            available = float(balance_update.get('available', 0))
-            frozen = float(balance_update.get('frozen', 0))
-            locked = float(balance_update.get('locked', 0))
-            
-            total = available + frozen + locked
-            
-            # Обновляем данные баланса
-            self.balance_data[coin] = {
-                'available': available,
-                'frozen': frozen,
-                'locked': locked,
-                'total': total,
-                'last_update': datetime.now()
-            }
-            
-            # Показываем только значимые балансы (больше 0.001)
-            if total > 0.001:
-                time_str = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-                
-                print(f"\\n💰 [{time_str}] БАЛАНС #{self.update_count}")
-                print(f"🪙 Валюта: {coin}")
-                print(f"✅ Доступно: {available:,.6f}")
-                if frozen > 0:
-                    print(f"❄️ Заморожено: {frozen:,.6f}")
-                if locked > 0:
-                    print(f"🔒 Заблокировано: {locked:,.6f}")
-                print(f"📊 Всего: {total:,.6f}")
-                print("─" * 40)
-                
-                # Показываем сводку каждые 10 обновлений
-                if self.update_count % 10 == 0:
-                    self.show_portfolio_summary()
-    
-    def show_portfolio_summary(self):
-        """Показать сводку портфеля"""
-        if not self.balance_data:
-            return
-        
-        print(f"\\n📊 СВОДКА ПОРТФЕЛЯ (обновлено: {datetime.now().strftime('%H:%M:%S')})")
-        print("=" * 60)
-        
-        # Фильтруем значимые балансы
-        significant_balances = {
-            coin: data for coin, data in self.balance_data.items() 
-            if data['total'] > 0.001
-        }
-        
-        if not significant_balances:
-            print("📭 Нет значимых балансов")
-            return
-        
-        print(f"💼 Валют в портфеле: {len(significant_balances)}")
-        print(f"🔄 Всего обновлений: {self.update_count}")
-        
-        print(f"\\n{'Валюта':^10} {'Доступно':>15} {'Заморожено':>15} {'Всего':>15}")
-        print("─" * 65)
-        
-        # Сортируем по общему балансу
-        sorted_balances = sorted(
-            significant_balances.items(),
-            key=lambda x: x[1]['total'],
-            reverse=True
-        )
-        
-        for coin, data in sorted_balances:
-            available = data['available']
-            frozen = data['frozen']
-            total = data['total']
-            
-            print(f"{coin:^10} {available:>15.6f} {frozen:>15.6f} {total:>15.6f}")
-        
-        # Статистика валют
-        usdt_balance = significant_balances.get('USDT', {}).get('total', 0)
-        btc_balance = significant_balances.get('BTC', {}).get('total', 0)
-        eth_balance = significant_balances.get('ETH', {}).get('total', 0)
-        
-        print(f"\\n💵 Основные балансы:")
-        if usdt_balance > 0:
-            print(f"💲 USDT: {usdt_balance:,.2f}")
-        if btc_balance > 0:
-            print(f"₿ BTC: {btc_balance:.6f}")
-        if eth_balance > 0:
-            print(f"Ξ ETH: {eth_balance:.6f}")
-    
+        """Вывод оригинальных JSON данных от биржи"""
+        print(json.dumps(data, indent=4, ensure_ascii=False))
+
+    def show_portfolio_summary(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
     async def handle_message(self, message):
-        """Обработка входящих сообщений"""
+        """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
-            
-            # Обработка ответа аутентификации
-            if data.get('event') == 'login':
-                if data.get('code') == '0':
-                    print("✅ Аутентификация успешна!")
-                    await self.subscribe_account()
-                else:
-                    print(f"❌ Ошибка аутентификации: {data.get('msg', 'Unknown error')}")
-                    return False
-            
-            # Обработка ответа на подписку
-            elif data.get('event') == 'subscribe':
-                if data.get('code') == '0':
-                    channel = data.get('arg', {}).get('channel', 'unknown')
-                    print(f"✅ Подписка успешна: {channel}")
-                else:
-                    print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка данных баланса
-            elif data.get('action') in ['snapshot', 'update']:
-                channel = data.get('arg', {}).get('channel', '')
-                if channel == 'account':
-                    self.format_balance_data(data)
+            print(json.dumps(data, indent=4, ensure_ascii=False))
             
             # Пинг-понг
-            elif 'ping' in data:
+            if 'ping' in data:
                 pong_message = {'pong': data['ping']}
                 if self.ws:
                     await self.ws.send(json.dumps(pong_message))
@@ -269,7 +160,6 @@ class SpotAccountChannel:
             print(f"❌ Ошибка декодирования JSON: {message}")
         except Exception as e:
             print(f"❌ Ошибка обработки сообщения: {e}")
-    
     async def listen(self):
         """Прослушивание сообщений"""
         try:
@@ -285,14 +175,10 @@ class SpotAccountChannel:
         """Отключение от WebSocket"""
         if self.ws:
             await self.ws.close()
-            print(f"🔌 Отключение от WebSocket. Обновлений: {self.update_count}")
-            
-            # Финальная сводка
-            self.show_portfolio_summary()
-
+            print("🔌 Отключение от WebSocket")
 
 async def monitor_account_balance():
-    """Мониторинг изменений баланса аккаунта"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -326,9 +212,8 @@ async def monitor_account_balance():
     finally:
         await account_client.disconnect()
 
-
 async def balance_tracker_with_timer():
-    """Трекер баланса с таймером"""
+    """JSON трекер"""
     config = load_config()
     if not config:
         return
@@ -370,10 +255,9 @@ async def balance_tracker_with_timer():
     finally:
         await account_client.disconnect()
 
-
 async def main():
     """Основная функция"""
-    print("💰 BITGET SPOT ACCOUNT CHANNEL")
+    print("💰 BITGET SPOT ACCOUNT CHANNEL (JSON)")
     print("=" * 40)
     
     print("🔌 Выберите режим мониторинга:")
@@ -392,7 +276,6 @@ async def main():
     
     except KeyboardInterrupt:
         print("\\n👋 Программа остановлена")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

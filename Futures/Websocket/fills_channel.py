@@ -5,6 +5,9 @@ Bitget USDT Perpetual Futures WebSocket - Fills Channel (Private)
 Канал для получения данных об исполненных сделках фьючерсов в реальном времени.
 Требует аутентификации для получения приватных данных.
 
+МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
+Больше никакого форматирования - только оригинальные поля биржи.
+
 Документация: https://www.bitget.com/api-doc/contract/websocket/private/Fills-Channel
 
 Структура данных:
@@ -33,7 +36,6 @@ import base64
 import time
 from datetime import datetime
 
-
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
@@ -42,7 +44,6 @@ def load_config():
     except FileNotFoundError:
         print("❌ Файл config.json не найден!")
         return None
-
 
 class FuturesFillsChannel:
     def __init__(self, config):
@@ -258,9 +259,7 @@ class FuturesFillsChannel:
             
             # Показываем статистику каждые 5 исполнений
             if self.update_count % 5 == 0:
-                self.show_trading_summary()
-            
-            print("─" * 60)
+                print("─" * 60)
     
     def update_trading_stats(self, symbol, side, fill_size, fill_price, fee_amount, leverage, reduce_only):
         """Обновить торговую статистику"""
@@ -284,120 +283,20 @@ class FuturesFillsChannel:
         count = self.trading_stats['total_fills']
         self.trading_stats['avg_leverage'] = ((current_avg * (count - 1)) + leverage) / count
     
-    def show_trading_summary(self):
-        """Показать торговую сводку"""
-        stats = self.trading_stats
-        
-        print(f"\\n📊 ТОРГОВАЯ СВОДКА FUTURES (обновлено: {datetime.now().strftime('%H:%M:%S')})")
-        print("=" * 70)
-        
-        print(f"🎯 Всего исполнений: {stats['total_fills']}")
-        print(f"🔄 Всего обновлений: {self.update_count}")
-        print(f"💱 Торговых пар: {len(stats['pairs_traded'])}")
-        
-        # Статистика по сторонам
-        if stats['total_fills'] > 0:
-            long_percent = (stats['long_fills'] / stats['total_fills']) * 100
-            short_percent = (stats['short_fills'] / stats['total_fills']) * 100
-            reduce_percent = (stats['reduce_only_fills'] / stats['total_fills']) * 100
-            
-            print(f"\\n📈 Распределение сделок:")
-            print(f"📈 Лонги: {stats['long_fills']} ({long_percent:.1f}%)")
-            print(f"📉 Шорты: {stats['short_fills']} ({short_percent:.1f}%)")
-            print(f"🔒 Закрытия: {stats['reduce_only_fills']} ({reduce_percent:.1f}%)")
-        
-        # Объемы и комиссии
-        print(f"\\n💰 Финансовая статистика:")
-        print(f"💵 Общий объем: ${stats['total_volume']:,.2f}")
-        print(f"💸 Общие комиссии: ${stats['total_fees']:,.6f}")
-        print(f"⚡ Среднее плечо: {stats['avg_leverage']:.1f}x")
-        
-        if stats['total_volume'] > 0:
-            avg_fee_percent = (stats['total_fees'] / stats['total_volume']) * 100
-            print(f"📈 Средняя комиссия: {avg_fee_percent:.4f}%")
-        
-        # Активные пары
-        if stats['pairs_traded']:
-            pairs_list = ', '.join(list(stats['pairs_traded'])[:5])
-            if len(stats['pairs_traded']) > 5:
-                pairs_list += f" и еще {len(stats['pairs_traded']) - 5}"
-            print(f"\\n💱 Активные пары: {pairs_list}")
-        
-        # Средний размер сделки
-        if stats['total_fills'] > 0:
-            avg_trade_size = stats['total_volume'] / stats['total_fills']
-            print(f"📊 Средний размер сделки: ${avg_trade_size:,.2f}")
-        
-        # Анализ стратегии
-        if stats['total_fills'] > 0:
-            if stats['reduce_only_fills'] / stats['total_fills'] > 0.5:
-                strategy_type = "🔒 ПРЕИМУЩЕСТВЕННО ЗАКРЫТИЕ ПОЗИЦИЙ"
-            elif abs(stats['long_fills'] - stats['short_fills']) / stats['total_fills'] < 0.2:
-                strategy_type = "⚖️ СБАЛАНСИРОВАННАЯ ТОРГОВЛЯ"
-            elif stats['long_fills'] > stats['short_fills']:
-                strategy_type = "📈 ПРЕИМУЩЕСТВЕННО ЛОНГИ"
-            else:
-                strategy_type = "📉 ПРЕИМУЩЕСТВЕННО ШОРТЫ"
-            
-            print(f"\\n📊 Тип стратегии: {strategy_type}")
-    
-    def show_recent_fills(self, count=10):
-        """Показать последние исполнения"""
-        if not self.fills_data:
-            return
-        
-        recent_fills = sorted(
-            self.fills_data.items(),
-            key=lambda x: x[1]['timestamp'],
-            reverse=True
-        )[:count]
-        
-        print(f"\\n🕐 ПОСЛЕДНИЕ {min(count, len(recent_fills))} ИСПОЛНЕНИЙ:")
-        print(f"{'Trade ID':^15} {'Пара':^12} {'Сторона':^8} {'Размер':>12} {'Цена':>12} {'Плечо':>8}")
-        print("─" * 85)
-        
-        for trade_id, data in recent_fills:
-            short_id = trade_id[-8:] if len(trade_id) > 8 else trade_id
-            
-            if data['side'].lower() == 'buy':
-                side_emoji = "📈"
-            else:
-                side_emoji = "📉"
-            
-            reduce_flag = " 🔒" if data['reduceOnly'] else ""
-            
-            print(f"{short_id:^15} {data['symbol']:^12} {side_emoji}{data['side'][:3]:^7} {data['fillSize']:>12.0f} {data['fillPrice']:>12.4f} {data['leverage']:>7.0f}x{reduce_flag}")
-    
+    def show_trading_summary(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
+    def show_recent_fills(self, *args, **kwargs):
+        """Метод удален - показываем только оригинальные JSON"""
+        pass
     async def handle_message(self, message):
-        """Обработка входящих сообщений"""
+        """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
-            
-            # Обработка ответа аутентификации
-            if data.get('event') == 'login':
-                if data.get('code') == '0':
-                    print("✅ Аутентификация успешна!")
-                    await self.subscribe_fills()
-                else:
-                    print(f"❌ Ошибка аутентификации: {data.get('msg', 'Unknown error')}")
-                    return False
-            
-            # Обработка ответа на подписку
-            elif data.get('event') == 'subscribe':
-                if data.get('code') == '0':
-                    channel = data.get('arg', {}).get('channel', 'unknown')
-                    print(f"✅ Подписка успешна: {channel}")
-                else:
-                    print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-            
-            # Обработка данных исполнений
-            elif data.get('action') in ['snapshot', 'update']:
-                channel = data.get('arg', {}).get('channel', '')
-                if channel == 'fills':
-                    self.format_fill_data(data)
+            print(json.dumps(data, indent=4, ensure_ascii=False))
             
             # Пинг-понг
-            elif 'ping' in data:
+            if 'ping' in data:
                 pong_message = {'pong': data['ping']}
                 if self.ws:
                     await self.ws.send(json.dumps(pong_message))
@@ -406,7 +305,6 @@ class FuturesFillsChannel:
             print(f"❌ Ошибка декодирования JSON: {message}")
         except Exception as e:
             print(f"❌ Ошибка обработки сообщения: {e}")
-    
     async def listen(self):
         """Прослушивание сообщений"""
         try:
@@ -422,15 +320,10 @@ class FuturesFillsChannel:
         """Отключение от WebSocket"""
         if self.ws:
             await self.ws.close()
-            print(f"🔌 Отключение от WebSocket. Обновлений: {self.update_count}")
-            
-            # Финальная сводка
-            self.show_trading_summary()
-            self.show_recent_fills()
-
+            print("🔌 Отключение от WebSocket")
 
 async def monitor_all_futures_fills():
-    """Мониторинг всех исполнений фьючерсов"""
+    """Мониторинг - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -464,9 +357,8 @@ async def monitor_all_futures_fills():
     finally:
         await fills_client.disconnect()
 
-
 async def leverage_analysis():
-    """Анализ использования плеча в торговле"""
+    """Упрощенный трекер - показывает только JSON"""
     config = load_config()
     if not config:
         return
@@ -547,7 +439,6 @@ async def leverage_analysis():
         print("\\n👋 Анализ остановлен")
     finally:
         await fills_client.disconnect()
-
 
 async def trading_session_analytics():
     """Аналитика торговой сессии"""
@@ -651,10 +542,9 @@ async def trading_session_analytics():
     finally:
         await fills_client.disconnect()
 
-
 async def main():
     """Основная функция"""
-    print("🎯 BITGET FUTURES FILLS CHANNEL")
+    print("🔌 Мониторинг исполнений фьючерсов")
     print("=" * 40)
     
     print("🔌 Выберите режим мониторинга:")
@@ -676,7 +566,6 @@ async def main():
     
     except KeyboardInterrupt:
         print("\\n👋 Программа остановлена")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
