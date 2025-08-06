@@ -7,13 +7,14 @@ Bitget USDT Perpetual Futures - Get Symbol Info
 import requests
 import json
 import os
+from pathlib import Path
 
 # Параметры запроса
 FUTURES_PARAMS = {
     'productType': 'USDT-FUTURES'
 }
 
-config_path = os.path.join(os.path.dirname(__file__), '../../config.json')
+config_path = Path(__file__).parent.parent.parent / "config.json"
 
 try:
     with open(config_path, 'r') as config_file:

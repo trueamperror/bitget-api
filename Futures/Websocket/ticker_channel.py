@@ -142,9 +142,7 @@ async def monitor_single_futures():
         if not await ticker_client.connect():
             return
         
-        symbol = input("💱 Введите символ фьючерса (например, BTCUSDT): ").strip().upper()
-        if not symbol:
-            symbol = "BTCUSDT"
+        symbol = "DOGEUSDT"  # Жёстко заданный символ
         
         await ticker_client.subscribe_ticker(symbol)
         
@@ -154,7 +152,7 @@ async def monitor_single_futures():
         await ticker_client.listen()
         
     except KeyboardInterrupt:
-        print("\\n👋 Мониторинг остановлен")
+        print("\n👋 Мониторинг остановлен")
     finally:
         await ticker_client.disconnect()
 
@@ -241,25 +239,8 @@ async def main():
     print("📊 BITGET FUTURES TICKER CHANNEL (JSON)")
     print("=" * 40)
     
-    print("🔌 Выберите режим мониторинга:")
-    print("1. 📊 Один фьючерсный контракт")
-    print("2. 📈 Несколько контрактов")
-    print("3. 🏦 Мониторинг ставок фондирования")
-    
-    try:
-        choice = input("Ваш выбор (1-3): ").strip()
-        
-        if choice == "1":
-            await monitor_single_futures()
-        elif choice == "2":
-            await monitor_multiple_futures()
-        elif choice == "3":
-            await funding_rates_monitor()
-        else:
-            print("❌ Неверный выбор")
-    
-    except KeyboardInterrupt:
-        print("\\n👋 Программа остановлена")
+    # Запускаем прямо мониторинг одного контракта (DOGEUSDT)
+    await monitor_single_futures()
 
 if __name__ == "__main__":
     asyncio.run(main())

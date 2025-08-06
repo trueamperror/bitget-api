@@ -2,13 +2,22 @@
 """
 Bitget USDT Perpetual Futures WebSocket - Account Channel (Private)
 
-Канал для получения данных баланса фьючерсного аккаунта в реальном времени.
+Канал для получения обновлений по аккаунту фьючерсов в реальном времени.
 Требует аутентификации для получения приватных данных.
 
 МОДИФИЦИРОВАННАЯ ВЕРСИЯ: Выводит оригинальные JSON сообщения от биржи с отступами.
 Больше никакого форматирования - только оригинальные поля биржи.
 
 Документация: https://www.bitget.com/api-doc/contract/websocket/private/Account-Channel
+
+Структура данных:
+- marginCoin: валюта маржи
+- available: доступный баланс
+- locked: заблокированный баланс
+- total: общий баланс
+- unrealizedPL: нереализованная прибыль/убыток
+- crossMarginLeverage: плечо кросс-маржи
+- isolatedMarginLeverage: плечо изолированной маржи
 """
 
 import asyncio
@@ -34,12 +43,12 @@ class FuturesAccountChannel:
     def __init__(self, config):
         self.config = config
         self.ws = None
+        self.account_data = {}
+        self.update_count = 0
         
     def generate_signature(self, timestamp, method, request_path, body=''):
-        """Генерация подписи для аутентификации согласно документации Bitget"""
-        # Для WebSocket аутентификации используется специальный формат
-        message = f"{timestamp}{method}{request_path}{body}"
-        
+        """Генерация подписи для аутентификации"""
+        message = str(timestamp) + method + request_path + body
         signature = hmac.new(
             self.config['secretKey'].encode('utf-8'),
             message.encode('utf-8'),
@@ -54,8 +63,8 @@ class FuturesAccountChannel:
             ssl_context.check_hostname = False
             ssl_context.verify_mode = ssl.CERT_NONE
             
-            # Используем специальный URL для приватных фьючерсных данных
-            private_futures_ws_url = 'wss://ws.bitget.com/v2/ws/private'
+            # Используем приватный фьючерсный WebSocket URL
+            private_futures_ws_url = self.config.get('privateFuturesWsURL', 'wss://ws.bitget.com/v2/ws/private')
             
             self.ws = await websockets.connect(
                 private_futures_ws_url,
@@ -97,6 +106,8 @@ class FuturesAccountChannel:
             try:
                 response = await asyncio.wait_for(self.ws.recv(), timeout=10)
                 data = json.loads(response)
+                print(f"🔐 Ответ аутентификации: {json.dumps(data, indent=2)}")
+                
                 if data.get('event') == 'login':
                     if str(data.get('code')) == '0':  # Преобразуем в строку для сравнения
                         print("✅ Аутентификация успешна!")
@@ -117,84 +128,40 @@ class FuturesAccountChannel:
         return False
     
     async def subscribe_account(self):
-        """Подписка на изменения баланса фьючерсного аккаунта"""
+        """Подписка на обновления аккаунта"""
         subscribe_message = {
             "op": "subscribe",
             "args": [
                 {
                     "instType": "USDT-FUTURES",
-                    "channel": "account",
-                    "coin": "default"  # Согласно документации, используется "coin" а не "instId"
+                    "channel": "balance"
                 }
             ]
         }
         
         if self.ws:
-            print(f"📡 Подписка на аккаунт: {subscribe_message}")
             await self.ws.send(json.dumps(subscribe_message))
+            print(f"📡 Отправлена подписка на аккаунт: {json.dumps(subscribe_message, indent=2)}")
+            print("📡 Подписка на данные аккаунта фьючерсов")
             
-            # Ждем подтверждения подписки
+            # Ждем подтверждение подписки
             try:
                 response = await asyncio.wait_for(self.ws.recv(), timeout=5)
                 data = json.loads(response)
-                
-                if data.get('event') == 'subscribe':
-                    # Проверяем успешность подписки
-                    if 'code' in data:
-                        if str(data.get('code')) == '0':
-                            print("✅ Подписка на аккаунт подтверждена")
-                            return True
-                        else:
-                            print(f"❌ Ошибка подписки: {data.get('msg', 'Unknown error')}")
-                            print(f"❌ Debug: Полный ответ: {data}")
-                            return False
-                    else:
-                        # Если нет поля code, но есть arg - значит подписка успешна
-                        if 'arg' in data:
-                            print("✅ Подписка на аккаунт подтверждена (без code)")
-                            return True
-                        else:
-                            print(f"🤔 Неожиданный формат ответа подписки: {data}")
-                            return False
-                elif data.get('action') == 'snapshot':
-                    # Возможно, сразу пришли данные аккаунта
-                    print("📊 Получены начальные данные аккаунта")
-                    await self.handle_message(json.dumps(data))
-                    return True
-                else:
-                    print(f"🤔 Неожиданный ответ: {data}")
-                    return False
-                    
+                print(f"📡 Ответ подписки: {json.dumps(data, indent=2)}")
             except asyncio.TimeoutError:
-                print("⏰ Таймаут подтверждения подписки")
-                return False
+                print("⚠️ Таймаут ответа подписки")
             except Exception as e:
-                print(f"❌ Ошибка при подтверждении подписки: {e}")
-                return False
-        
-        return False
+                print(f"⚠️ Ошибка получения ответа подписки: {e}")
     
-    def format_account_data(self, data):
-        """Вывод оригинальных JSON данных от биржи"""
-        print(json.dumps(data, indent=4, ensure_ascii=False))
-    
-    def show_account_analytics(self, *args, **kwargs):
-        """Метод удален - показываем только оригинальные JSON"""
-        pass
     async def handle_message(self, message):
         """Обработка входящих сообщений - вывод оригинальных JSON"""
         try:
             data = json.loads(message)
             print(json.dumps(data, indent=4, ensure_ascii=False))
             
-            # Обработка данных аккаунта для вызова format_account_data
-            if data.get('action') in ['snapshot', 'update']:
-                channel = data.get('arg', {}).get('channel', '')
-                if channel == 'account':
-                    self.format_account_data(data)
-            
             # Пинг-понг
-            elif 'ping' in data:
+            if 'ping' in data:
                 pong_message = {'pong': data['ping']}
                 if self.ws:
                     await self.ws.send(json.dumps(pong_message))
@@ -203,22 +170,17 @@ class FuturesAccountChannel:
             print(f"❌ Ошибка декодирования JSON: {message}")
         except Exception as e:
             print(f"❌ Ошибка обработки сообщения: {e}")
-            import traceback
-            traceback.print_exc()
     
     async def listen(self):
         """Прослушивание сообщений"""
         try:
             if self.ws:
-                print("👂 Начинаем прослушивание сообщений...")
                 async for message in self.ws:
                     await self.handle_message(message)
-        except websockets.exceptions.ConnectionClosed as e:
-            print(f"🔌 WebSocket соединение закрыто: {e}")
+        except websockets.exceptions.ConnectionClosed:
+            print("🔌 WebSocket соединение закрыто")
         except Exception as e:
             print(f"❌ Ошибка прослушивания: {e}")
-            import traceback
-            traceback.print_exc()
     
     async def disconnect(self):
         """Отключение от WebSocket"""
@@ -226,8 +188,8 @@ class FuturesAccountChannel:
             await self.ws.close()
             print("🔌 Отключение от WebSocket")
 
-async def monitor_futures_account():
-    """Мониторинг фьючерсного аккаунта - показывает оригинальные JSON"""
+async def monitor_all_futures_account():
+    """Мониторинг аккаунта - показывает оригинальные JSON"""
     config = load_config()
     if not config:
         return
@@ -239,7 +201,7 @@ async def monitor_futures_account():
             print(f"❌ Отсутствует {key} в конфигурации")
             return
     
-    print("💰 МОНИТОРИНГ FUTURES АККАУНТА (JSON)")
+    print("📋 МОНИТОРИНГ АККАУНТА FUTURES")
     print("=" * 40)
     print("🔐 Требуется аутентификация для приватных данных")
     
@@ -250,97 +212,29 @@ async def monitor_futures_account():
             return
         
         if not await account_client.authenticate():
-            print("❌ Не удалось аутентифицироваться")
+            print("❌ Ошибка аутентификации. Проверьте API ключи.")
             return
         
-        await asyncio.sleep(1)
+        await asyncio.sleep(1)  # Пауза между аутентификацией и подпиской
+        await account_client.subscribe_account()  # Подписываемся на аккаунт
         
-        if not await account_client.subscribe_account():
-            print("❌ Не удалось подписаться на аккаунт")
-            return
-        
-        print("🔄 Мониторинг - показываем оригинальные JSON сообщения от биржи...")
+        print("🔄 Мониторинг аккаунта фьючерсов...")
         print("💡 Нажмите Ctrl+C для остановки")
         
         await account_client.listen()
         
     except KeyboardInterrupt:
-        print("\n👋 Мониторинг остановлен пользователем")
-    except Exception as e:
-        print(f"\n❌ Ошибка мониторинга: {e}")
-        import traceback
-        traceback.print_exc()
-    finally:
-        await account_client.disconnect()
-
-async def equity_growth_tracker():
-    """Упрощенный трекер - показывает только JSON"""
-    config = load_config()
-    if not config:
-        return
-    
-    # Проверяем наличие необходимых ключей
-    required_keys = ['apiKey', 'secretKey', 'passphrase']
-    for key in required_keys:
-        if key not in config or not config[key]:
-            print(f"❌ Отсутствует {key} в конфигурации")
-            return
-    
-    print("📈 JSON ТРЕКЕР")
-    print("=" * 40)
-    
-    duration = input("⏰ Время трекинга в секундах (по умолчанию 600): ").strip()
-    try:
-        duration = int(duration) if duration else 600
-    except ValueError:
-        duration = 600
-    
-    account_client = FuturesAccountChannel(config)
-    
-    try:
-        if not await account_client.connect():
-            return
-        
-        if not await account_client.authenticate():
-            print("❌ Не удалось аутентифицироваться")
-            return
-        
-        await account_client.subscribe_account()
-        
-        print(f"🔄 Показываем JSON сообщения в течение {duration} секунд...")
-        print("💡 Нажмите Ctrl+C для остановки")
-        
-        try:
-            await asyncio.wait_for(account_client.listen(), timeout=duration)
-        except asyncio.TimeoutError:
-            print(f"\n⏰ Трекинг завершен")
-        
-    except KeyboardInterrupt:
-        print("\n👋 Трекинг остановлен")
+        print("\\n👋 Мониторинг остановлен")
     finally:
         await account_client.disconnect()
 
 async def main():
     """Основная функция"""
-    print("💰 BITGET FUTURES ACCOUNT CHANNEL (JSON)")
+    print("🔌 Мониторинг аккаунта фьючерсов")
     print("=" * 40)
     
-    print("🔌 Выберите режим мониторинга:")
-    print("1. 💰 Мониторинг аккаунта (JSON)")
-    print("2. 📈 JSON трекер")
-    
-    try:
-        choice = input("Ваш выбор (1-2): ").strip()
-        
-        if choice == "1":
-            await monitor_futures_account()
-        elif choice == "2":
-            await equity_growth_tracker()
-        else:
-            print("❌ Неверный выбор")
-    
-    except KeyboardInterrupt:
-        print("\n👋 Программа остановлена")
+    # Запускаем прямо мониторинг аккаунта
+    await monitor_all_futures_account()
 
 if __name__ == "__main__":
     asyncio.run(main())

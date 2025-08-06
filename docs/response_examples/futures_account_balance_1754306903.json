@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/v2/mix/account/accounts",
+    "params": {
+      "productType": "USDT-FUTURES"
+    }
+  },
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1754306903770,
+    "data": [
+      {
+        "marginCoin": "USDT",
+        "locked": "0.57687272",
+        "available": "45.15271916",
+        "crossedMaxAvailable": "44.57584643",
+        "isolatedMaxAvailable": "44.57584643",
+        "maxTransferOut": "44.57584643",
+        "accountEquity": "45.15271916",
+        "usdtEquity": "45.152719160579",
+        "btcEquity": "0.00039478305",
+        "crossedRiskRate": "0.001700008359",
+        "unrealizedPL": "0",
+        "coupon": "0",
+        "crossedUnrealizedPL": "",
+        "isolatedUnrealizedPL": "",
+        "grant": "0",
+        "unionTotalMargin": "45.15271916",
+        "unionAvailable": "44.57584643",
+        "unionMm": "0.07676",
+        "assetList": [],
+        "assetMode": "single",
+        "isolatedMargin": "0",
+        "crossedMargin": "0"
+      }
+    ]
+  },
+  "status_code": 200,
+  "timestamp": "2025-08-04T18:28:23.774787"
+}

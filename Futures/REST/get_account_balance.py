@@ -17,11 +17,13 @@ import hashlib
 import base64
 import time
 from datetime import datetime
+from pathlib import Path
 
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
-        with open('../../config.json', 'r') as f:
+        config_path = Path(__file__).parent.parent.parent / "config.json"
+        with open(config_path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
         print("❌ Файл config.json не найден!")
@@ -215,19 +217,9 @@ def main():
             available = float(account.get('available', 0))
             print(f"{i+1}. {margin_coin} (доступно: {available:.4f})")
         
-        choice = input("\nВведите номер валюты (или Enter для пропуска): ").strip()
-        
-        if choice.isdigit() and 1 <= int(choice) <= len(balance_data):
-            selected_account = balance_data[int(choice)-1]
-            print(f"\n📋 ДЕТАЛЬНАЯ ИНФОРМАЦИЯ:")
-            print("=" * 40)
-            
-            # Выводим все поля аккаунта
-            for key, value in selected_account.items():
-                print(f"   {key}: {value}")
+        print("✅ Баланс получен успешно!")
     else:
         print("❌ Не удалось получить информацию о балансе")
-        print("🔧 Проверьте config.json и соединение с интернетом")
 
 if __name__ == "__main__":
     main()

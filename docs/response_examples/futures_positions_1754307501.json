@@ -1,0 +1,50 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/v2/mix/position/all-position",
+    "params": {
+      "productType": "USDT-FUTURES"
+    }
+  },
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1754307501515,
+    "data": [
+      {
+        "marginCoin": "USDT",
+        "symbol": "DOGEUSDT",
+        "holdSide": "long",
+        "openDelegateSize": "0",
+        "marginSize": "0.557944444445",
+        "available": "50",
+        "locked": "0",
+        "total": "50",
+        "leverage": "18",
+        "achievedProfits": "0",
+        "openPriceAvg": "0.20086",
+        "marginMode": "crossed",
+        "posMode": "one_way_mode",
+        "unrealizedPL": "-0.0015",
+        "liquidationPrice": "-0.697387923212",
+        "keepMarginRate": "0.0066",
+        "markPrice": "0.20083",
+        "marginRatio": "0.005101329199",
+        "breakEvenPrice": "0.201262122123",
+        "totalFee": "",
+        "deductedFee": "0.010043",
+        "grant": "",
+        "assetMode": "single",
+        "autoMargin": "off",
+        "takeProfit": "",
+        "stopLoss": "",
+        "takeProfitId": "",
+        "stopLossId": "",
+        "cTime": "1754307482540",
+        "uTime": "1754307482540"
+      }
+    ]
+  },
+  "status_code": 200,
+  "timestamp": "2025-08-04T18:38:21.525081"
+}

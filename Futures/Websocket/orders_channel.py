@@ -121,6 +121,8 @@ class FuturesOrdersChannel:
             try:
                 response = await asyncio.wait_for(self.ws.recv(), timeout=10)
                 data = json.loads(response)
+                print(f"🔐 Ответ аутентификации: {json.dumps(data, indent=2)}")
+                
                 if data.get('event') == 'login':
                     if str(data.get('code')) == '0':  # Преобразуем в строку для сравнения
                         print("✅ Аутентификация успешна!")
@@ -155,10 +157,21 @@ class FuturesOrdersChannel:
         
         if self.ws:
             await self.ws.send(json.dumps(subscribe_message))
+            print(f"📡 Отправлена подписка на ордера: {json.dumps(subscribe_message, indent=2)}")
             if symbol:
                 print(f"📡 Подписка на ордера фьючерса {symbol}")
             else:
                 print("📡 Подписка на все ордера фьючерсов")
+            
+            # Ждем подтверждение подписки
+            try:
+                response = await asyncio.wait_for(self.ws.recv(), timeout=5)
+                data = json.loads(response)
+                print(f"📡 Ответ подписки: {json.dumps(data, indent=2)}")
+            except asyncio.TimeoutError:
+                print("⚠️ Таймаут ответа подписки")
+            except Exception as e:
+                print(f"⚠️ Ошибка получения ответа подписки: {e}")
     
     def get_status_emoji(self, *args, **kwargs):
         """Метод удален - показываем только оригинальные JSON"""
@@ -344,7 +357,12 @@ async def monitor_all_futures_orders():
         if not await orders_client.connect():
             return
         
-        await orders_client.authenticate()
+        if not await orders_client.authenticate():
+            print("❌ Ошибка аутентификации. Проверьте API ключи.")
+            return
+        
+        await asyncio.sleep(1)  # Пауза между аутентификацией и подпиской
+        await orders_client.subscribe_orders()  # Добавили подписку!
         
         print("🔄 Мониторинг ордеров фьючерсов...")
         print("💡 Нажмите Ctrl+C для остановки")
@@ -497,25 +515,8 @@ async def main():
     print("🔌 Мониторинг ордеров фьючерсов")
     print("=" * 40)
     
-    print("🔌 Выберите режим мониторинга:")
-    print("1. 📋 Все ордера фьючерсов")
-    print("2. ⚡ Анализ использования плеча")
-    print("3. ✅ Мониторинг исполнения ордеров")
-    
-    try:
-        choice = input("Ваш выбор (1-3): ").strip()
-        
-        if choice == "1":
-            await monitor_all_futures_orders()
-        elif choice == "2":
-            await leverage_analysis()
-        elif choice == "3":
-            await order_execution_monitor()
-        else:
-            print("❌ Неверный выбор")
-    
-    except KeyboardInterrupt:
-        print("\\n👋 Программа остановлена")
+    # Запускаем прямо мониторинг всех ордеров
+    await monitor_all_futures_orders()
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -213,7 +213,11 @@ async def monitor_all_positions():
         if not await positions_client.connect():
             return
         
-        await positions_client.authenticate()
+        if not await positions_client.authenticate():
+            print("❌ Ошибка аутентификации. Проверьте API ключи.")
+            return
+        
+        await asyncio.sleep(1)  # Пауза между аутентификацией и подпиской
         await positions_client.subscribe_positions()  # Добавляем подписку на позиции!
         
         print("🔄 Мониторинг позиций...")
@@ -222,7 +226,7 @@ async def monitor_all_positions():
         await positions_client.listen()
         
     except KeyboardInterrupt:
-        print("\\n👋 Мониторинг остановлен")
+        print("\n👋 Мониторинг остановлен")
     finally:
         await positions_client.disconnect()
 
@@ -343,25 +347,8 @@ async def main():
     print("🎯 BITGET FUTURES POSITIONS CHANNEL (JSON)")
     print("=" * 40)
     
-    print("🔌 Выберите режим мониторинга:")
-    print("1. 🎯 Все позиции")
-    print("2. 📈 Трекер PnL с уведомлениями")
-    print("3. ⚠️ Мониторинг рисков")
-    
-    try:
-        choice = input("Ваш выбор (1-3): ").strip()
-        
-        if choice == "1":
-            await monitor_all_positions()
-        elif choice == "2":
-            await pnl_tracker()
-        elif choice == "3":
-            await position_risk_monitor()
-        else:
-            print("❌ Неверный выбор")
-    
-    except KeyboardInterrupt:
-        print("\\n👋 Программа остановлена")
+    # Запускаем прямо мониторинг позиций
+    await monitor_all_positions()
 
 if __name__ == "__main__":
     asyncio.run(main())

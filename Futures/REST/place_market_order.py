@@ -17,11 +17,13 @@ import hashlib
 import base64
 import time
 from datetime import datetime
+from pathlib import Path
 
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
-        with open('../../config.json', 'r') as f:
+        config_path = Path(__file__).parent.parent.parent / "config.json"
+        with open(config_path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
         print("❌ Файл config.json не найден!")
@@ -199,111 +201,68 @@ def display_order_result(order_result):
     print(f"   python get_account_balance.py")
 
 def main():
-    """Основная функция"""
-    print("⚡ РАЗМЕЩЕНИЕ FUTURES MARKET ОРДЕРА BITGET")
-    print("=" * 50)
-    
-    # Загрузка конфигурации
-    config = load_config()
-    if not config:
-        return
-    
-    # Проверка API ключей
-    required_keys = ['apiKey', 'secretKey', 'passphrase', 'baseURL']
-    for key in required_keys:
-        if not config.get(key):
-            print(f"❌ Отсутствует ключ '{key}' в config.json")
-            return
-    
-    # Выбор торговой пары
-    symbol = input("💱 Введите символ пары (по умолчанию BTCUSDT): ").strip().upper()
-    if not symbol:
-        symbol = "BTCUSDT"
-    
-    # Получение информации о паре
-    print(f"🔄 Получение информации о {symbol}...")
-    symbol_info = get_symbol_info(config, symbol)
-    current_price = get_current_price(config, symbol)
-    
-    if current_price:
-        print(f"💰 Текущая цена: ${current_price:.4f}")
-    
-    if symbol_info:
-        print(f"📏 Минимальный размер: {symbol_info['minTradeNum']}")
-        print(f"🪙 Базовая валюта: {symbol_info['baseCoin']}")
-        print(f"💵 Котируемая валюта: {symbol_info['quoteCoin']}")
-        print(f"🔢 Максимальное плечо: {symbol_info['maxLever']}")
-    
-    # Выбор стороны
-    print(f"\n🎯 Выберите действие:")
-    print("1. 🟢 Купить (Buy) - Длинная позиция")
-    print("2. 🔴 Продать (Sell) - Короткая позиция")
-    
-    side_choice = input("Ваш выбор (1-2): ").strip()
-    
-    side_map = {
-        "1": "buy",
-        "2": "sell"
+    config_path = Path(__file__).parent.parent.parent / "config.json"
+    with open(config_path, 'r') as file:
+        config = json.load(file)
+
+    base_url = "https://api.bitget.com"
+    endpoint = "/api/v2/mix/order/place-order"
+
+    timestamp = str(int(time.time() * 1000))
+
+    # Тело запроса
+    body = {
+        "symbol": "DOGEUSDT",
+        "productType": "USDT-FUTURES",
+        "marginMode": "crossed",
+        "marginCoin": "USDT",
+        "size": "50",
+        "side": "buy",
+        "orderType": "market"
     }
-    
-    if side_choice not in side_map:
-        print("❌ Неверный выбор")
-        return
-    
-    side = side_map[side_choice]
-    
-    # Размер позиции
-    size = input("📏 Введите размер позиции в контрактах: ").strip()
-    try:
-        size = float(size)
-        if symbol_info and size < symbol_info['minTradeNum']:
-            print(f"❌ Минимальный размер: {symbol_info['minTradeNum']}")
-            return
-    except ValueError:
-        print("❌ Неверный формат размера")
-        return
-    
-    # Выбор режима маржи
-    print(f"\n⚖️ Выберите режим маржи:")
-    print("1. 🔄 Кросс-маржа (Crossed) - Рекомендуется")
-    print("2. 🎯 Изолированная маржа (Isolated)")
-    
-    margin_choice = input("Ваш выбор (1-2): ").strip()
-    
-    if margin_choice == "1":
-        margin_mode = "crossed"
-    elif margin_choice == "2":
-        margin_mode = "isolated"
+
+    body_json = json.dumps(body)
+
+    # Создание подписи
+    if "":
+        message = f"{timestamp}POST{endpoint}?{body_json}"
     else:
-        print("❌ Неверный выбор")
-        return
-    
-    # Подтверждение
-    print(f"\n❓ ПОДТВЕРЖДЕНИЕ FUTURES MARKET ОРДЕРА")
-    print("=" * 45)
-    print(f"💱 Пара: {symbol}")
-    print(f"🎯 Действие: {get_side_emoji(side)} {side.upper()}")
-    print(f"📏 Размер: {size} контрактов")
-    print(f"⚖️ Режим маржи: {margin_mode}")
-    
-    if current_price and current_price > 0:
-        notional_value = size * current_price
-        print(f"📊 Примерная стоимость позиции: ${notional_value:.2f}")
-    
-    print(f"\n⚠️ ВНИМАНИЕ: Market ордер исполнится НЕМЕДЛЕННО по рыночной цене!")
-    confirm = input("✅ Подтвердите размещение ордера (y/N): ").strip().lower()
-    
-    if confirm != 'y':
-        print("❌ Размещение ордера отменено")
-        return
-    
-    # Размещение ордера
-    result = place_market_order(config, symbol, side, size, margin_mode)
-    
-    if result:
-        display_order_result(result)
-    else:
-        print("❌ Не удалось разместить futures market ордер")
+        message = f"{timestamp}POST{endpoint}{body_json}"
+
+    signature = hmac.new(
+        config['secretKey'].encode('utf-8'),
+        message.encode('utf-8'),
+        hashlib.sha256
+    ).digest()
+
+    signature = base64.b64encode(signature).decode('utf-8')
+
+    # Заголовки
+    headers = {
+        'ACCESS-KEY': config['apiKey'],
+        'ACCESS-SIGN': signature,
+        'ACCESS-TIMESTAMP': timestamp,
+        'ACCESS-PASSPHRASE': config['passphrase'],
+        'Content-Type': 'application/json',
+        'locale': 'en-US'
+    }
+
+    print(f"Размещение рыночного ордера:")
+    print(f"Символ: DOGEUSDT")
+    print(f"Сторона: buy")
+    print(f"Размер: 50")
+    print(f"Тип: market")
+    print("-" * 50)
+
+    # Отправка запроса
+    response = requests.post(
+        base_url + endpoint,
+        headers=headers,
+        data=body_json
+    )
+
+    # Вывод результата
+    print(json.dumps(response.json(), indent=4, ensure_ascii=False))
 
 if __name__ == "__main__":
     try:

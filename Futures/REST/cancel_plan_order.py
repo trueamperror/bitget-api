@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Bitget Futures - Выставление плановой стоп-заявки (Plan Order)
-Place Plan Order API
+Bitget Futures - Отмена плановой стоп-заявки
+Cancel Plan Order API
 
-Документация: https://www.bitget.com/api-doc/contract/plan/Place-Plan-Order
+Документация: https://www.bitget.com/api-doc/contract/plan/Cancel-Plan-Order
 """
 
 import json
@@ -25,26 +25,25 @@ def create_signature(secret_key, timestamp, method, request_path, body=''):
     ).decode()
     return signature
 
-def place_plan_order():
+def cancel_plan_order():
     config = load_config()
     
     base_url = "https://api.bitget.com"
-    endpoint = "/api/v2/mix/order/place-plan-order"
+    endpoint = "/api/v2/mix/order/cancel-plan-order"
     
     timestamp = str(int(time.time() * 1000))
     
-    # Тело запроса
+    # Тело запроса с хардкодными параметрами
     body = {
+        "orderIdList": [
+            {
+                "orderId": "1336240979397656576"
+            }
+        ],
         "symbol": "DOGEUSDT",
         "productType": "USDT-FUTURES",
-        "marginMode": "crossed",
         "marginCoin": "USDT",
-        "size": "50",
-        "side": "buy",
-        "orderType": "market",
-        "triggerPrice": "0.2024",
-        "triggerType": "mark_price",
-        "planType": "normal_plan"  # Обязательное поле
+        "planType": "normal_plan"
     }
     
     body_json = json.dumps(body)
@@ -68,12 +67,9 @@ def place_plan_order():
         'locale': 'en-US'
     }
     
-    print(f"Выставление плановой стоп-заявки:")
+    print(f"Отмена плановой стоп-заявки:")
     print(f"Символ: DOGEUSDT")
-    print(f"Сторона: buy")
-    print(f"Размер: 50")
-    print(f"Триггер цена: 0.20140")
-    print(f"Тип заявки: market")
+    print(f"Order ID: 1336239936371236864")
     print("-" * 50)
     
     # Отправка запроса
@@ -87,4 +83,4 @@ def place_plan_order():
     print(json.dumps(response.json(), indent=4, ensure_ascii=False))
 
 if __name__ == "__main__":
-    place_plan_order()
+    cancel_plan_order()

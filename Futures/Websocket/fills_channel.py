@@ -547,25 +547,8 @@ async def main():
     print("🔌 Мониторинг исполнений фьючерсов")
     print("=" * 40)
     
-    print("🔌 Выберите режим мониторинга:")
-    print("1. 🎯 Все исполнения фьючерсов")
-    print("2. ⚡ Анализ использования плеча")
-    print("3. 📊 Аналитика торговой сессии")
-    
-    try:
-        choice = input("Ваш выбор (1-3): ").strip()
-        
-        if choice == "1":
-            await monitor_all_futures_fills()
-        elif choice == "2":
-            await leverage_analysis()
-        elif choice == "3":
-            await trading_session_analytics()
-        else:
-            print("❌ Неверный выбор")
-    
-    except KeyboardInterrupt:
-        print("\\n👋 Программа остановлена")
+    # Запускаем прямо мониторинг исполнений
+    await monitor_all_futures_fills()
 
 if __name__ == "__main__":
     asyncio.run(main())

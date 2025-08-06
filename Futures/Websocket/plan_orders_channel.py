@@ -489,25 +489,11 @@ async def risk_management_analysis():
 
 async def main():
     """Основная функция"""
-    print("CHANNEL") (JSON)
+    print("🎯 BITGET FUTURES PLAN ORDERS CHANNEL (JSON)")
     print("=" * 40)
     
-    print("🔌 Выберите режим мониторинга:")
-    print("1. 🎯 Все плановые ордера")
-    print("2. 🛡️ Анализ риск-менеджмента")
-    
-    try:
-        choice = input("Ваш выбор (1-2): ").strip()
-        
-        if choice == "1":
-            await monitor_all_plan_orders()
-        elif choice == "2":
-            await risk_management_analysis()
-        else:
-            print("❌ Неверный выбор")
-    
-    except KeyboardInterrupt:
-        print("\\n👋 Программа остановлена")
+    # Запускаем прямо мониторинг плановых ордеров
+    await monitor_all_plan_orders()
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -17,11 +17,13 @@ import hashlib
 import base64
 import time
 from datetime import datetime
+from pathlib import Path
 
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
-        with open('../../config.json', 'r') as f:
+        config_path = Path(__file__).parent.parent.parent / "config.json"
+        with open(config_path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
         print("❌ Файл config.json не найден!")
@@ -210,35 +212,15 @@ def display_positions(positions):
     print("⚙️ Для изменения плеча: python set_leverage.py")
 
 def main():
-    """Основная функция"""
-    
-    config = load_config()
-    if not config:
-        return
-    
-    # Проверка API ключей
-    required_keys = ['apiKey', 'secretKey', 'passphrase', 'baseURL']
-    for key in required_keys:
-        if not config.get(key):
-            print(f"❌ Отсутствует ключ '{key}' в config.json")
-            return
-    
-    print("🔑 API ключи загружены успешно")
+    config_path = Path(__file__).parent.parent.parent / "config.json"
+    with open(config_path, 'r') as file:
+        config = json.load(file)
     
     # Получение позиций
     positions = get_positions(config)
     
     if positions is not None:
-        print(f"\n✅ Информация о позициях получена успешно!")
-        
-        # Опция для обновления информации
-        while True:
-            choice = input("\n🔄 Обновить информацию о позициях? (y/N): ").strip().lower()
-            if choice == 'y':
-                print("\n" + "="*50)
-                get_positions(config)
-            else:
-                break
+        print("✅ Информация о позициях получена успешно!")
     else:
         print("❌ Не удалось получить информацию о позициях")
 

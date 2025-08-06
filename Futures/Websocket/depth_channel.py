@@ -131,25 +131,8 @@ async def monitor_futures_depth():
         if not await depth_client.connect():
             return
         
-        symbol = input("💱 Введите символ фьючерса (например, BTCUSDT): ").strip().upper()
-        if not symbol:
-            symbol = "BTCUSDT"
-        
-        print("📋 Выберите глубину стакана:")
-        print("1. 📚 Топ-5 уровней (books5)")
-        print("2. 📖 Топ-15 уровней (books15)")
-        print("3. 📙 Полный стакан (books)")
-        
-        depth_choice = input("Ваш выбор (1-3): ").strip()
-        
-        if depth_choice == "1":
-            depth_level = "books5"
-        elif depth_choice == "2":
-            depth_level = "books15"
-        elif depth_choice == "3":
-            depth_level = "books"
-        else:
-            depth_level = "books5"
+        symbol = "DOGEUSDT"  # Жёстко заданный символ
+        depth_level = "books15"  # Жёстко заданная глубина
         
         await depth_client.subscribe_depth(symbol, depth_level)
         
@@ -243,25 +226,8 @@ async def main():
     print("📚 BITGET FUTURES DEPTH CHANNEL (JSON)")
     print("=" * 40)
     
-    print("🔌 Выберите режим мониторинга:")
-    print("1. 📚 Стакан фьючерса (JSON)")
-    print("2. 💧 JSON трекер ликвидности")
-    print("3. 💰 JSON мониторинг спреда")
-    
-    try:
-        choice = input("Ваш выбор (1-3): ").strip()
-        
-        if choice == "1":
-            await monitor_futures_depth()
-        elif choice == "2":
-            await liquidity_analysis()
-        elif choice == "3":
-            await spread_monitoring()
-        else:
-            print("❌ Неверный выбор")
-    
-    except KeyboardInterrupt:
-        print("\n👋 Программа остановлена")
+    # Запускаем прямо мониторинг стакана
+    await monitor_futures_depth()
 
 if __name__ == "__main__":
     asyncio.run(main())

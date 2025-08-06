@@ -1,0 +1,24 @@
+{
+  "request": {
+    "symbol": "DOGEUSDT",
+    "productType": "USDT-FUTURES",
+    "marginMode": "crossed",
+    "marginCoin": "USDT",
+    "size": "50.0",
+    "side": "sell",
+    "orderType": "limit",
+    "price": "0.202",
+    "force": "gtc"
+  },
+  "response": {
+    "code": "00000",
+    "msg": "success",
+    "requestTime": 1754306962104,
+    "data": {
+      "clientOid": "1336225736415100929",
+      "orderId": "1336225736398323714"
+    }
+  },
+  "status_code": 200,
+  "timestamp": "2025-08-04T18:29:22.125404"
+}

@@ -15,12 +15,14 @@ import hashlib
 import base64
 import time
 from datetime import datetime
+from pathlib import Path
 
 
 def load_config():
     """Загрузка конфигурации из файла"""
     try:
-        with open('/Users/timurbogatyrev/Documents/VS Code/Algo/ExchangeAPI/Bitget/config.json', 'r') as f:
+        config_path = Path(__file__).parent.parent.parent / "config.json"
+        with open(config_path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
         print("❌ Файл config.json не найден!")
